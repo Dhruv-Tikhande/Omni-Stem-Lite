@@ -25,4 +25,4 @@ def transcribe_audio(audio_file_path):
     print(f"User Query: {full_text.strip()}")
 
 # Make sure this matches the name of the file you recorded!
-transcribe_audio("pulkit.wav")
+transcribe_audio("test_audio.mp3")
