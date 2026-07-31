@@ -1,6 +1,19 @@
+# Environments & Dependencies
 node_modules/
 __pycache__/
 venv/
+env/
+
+# Security & Large Weights
 *.env
 *.pt
 *.bin
+
+# Omni-STEM Local Data (DO NOT PUSH)
+temp_uploads/
+memory_db/
+processed_images/
+
+# OS generated files
+.DS_Store
+Thumbs.db
