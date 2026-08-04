@@ -1,88 +1,129 @@
 import streamlit as st
+import fitz  # PyMuPDF
 from PIL import Image
-from gtts import gTTS
-import tempfile
+import io
 import os
-import time
-from streamlit_mic_recorder import speech_to_text  # NEW IMPORT
+import json
+from faster_whisper import WhisperModel
+from gtts import gTTS
 
-# --- Page Config ---
-st.set_page_config(page_title="Omni-STEM Assistant", page_icon="🎙️", layout="wide")
+# ==========================================
+# PAGE CONFIGURATION
+# ==========================================
+st.set_page_config(page_title="Omni-STEM Prototype (Manual Colab Bridge)", layout="wide")
+st.title("🎙️ Omni-STEM Assistant (Prototype)")
 
-# --- Initialize Memory ---
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-if "current_image" not in st.session_state:
-    st.session_state.current_image = None
+# ==========================================
+# INITIALIZE MODELS (Cached for speed)
+# ==========================================
+@st.cache_resource
+def load_whisper():
+    # Using 'tiny' model for fast local transcription during demo
+    return WhisperModel("tiny", device="cpu", compute_type="int8")
 
-# --- Text-to-Speech Function ---
-def generate_audio(text):
-    tts = gTTS(text=text, lang='en', tld='co.in')
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
-    tts.save(temp_file.name)
-    return temp_file.name
+whisper_model = load_whisper()
 
-# --- MAIN UI STRUCTURE ---
-st.title("🎙️ Omni-STEM Accessibility Assistant")
-st.markdown("Upload a STEM diagram, and ask questions using your mic or keyboard.")
+# Ensure temp directories exist
+os.makedirs("temp", exist_ok=True)
+processed_image_path = "temp/processed_image.png"
+json_export_path = "temp/colab_input.json"
 
-col1, col2 = st.columns([1, 1.5])
+# Layout in two columns
+col1, col2 = st.columns(2)
 
+# ==========================================
+# COLUMN 1: UPLOAD & USER INPUT (To send to Colab)
+# ==========================================
 with col1:
     st.header("1. Document Ingestion")
-    uploaded_file = st.file_uploader("Upload PDF / Image", type=["png", "jpg", "jpeg", "pdf"])
-    
+    uploaded_file = st.file_uploader("Upload PDF or Image", type=["png", "jpg", "jpeg", "pdf"])
+
     if uploaded_file is not None:
-        image = Image.open(uploaded_file)
-        st.session_state.current_image = image
-        st.image(image, caption="Uploaded Diagram", use_container_width=True)
-        st.success("Image successfully processed and ready for AI.")
-
-with col2:
-    st.header("2. AI Tutor Chat")
-    
-    # Display Chat History
-    chat_container = st.container(height=300)
-    with chat_container:
-        for chat in st.session_state.chat_history:
-            if chat["role"] == "user":
-                st.markdown(f"**👤 You:** {chat['content']}")
+        try:
+            # Handle PDF vs Image
+            if uploaded_file.name.lower().endswith('.pdf'):
+                # Convert PDF to 300 DPI Image
+                doc = fitz.open(stream=uploaded_file.read(), filetype="pdf")
+                page = doc.load_page(0)  # Get first page
+                # Matrix for 300 DPI (300/72 = 4.16)
+                zoom = 300 / 72
+                mat = fitz.Matrix(zoom, zoom)
+                pix = page.get_pixmap(matrix=mat)
+                img = Image.open(io.BytesIO(pix.tobytes("png")))
+                img.save(processed_image_path, dpi=(300, 300))
+                st.success("✅ PDF converted to 300 DPI image.")
             else:
-                st.markdown(f"**🤖 Jarvis:** {chat['content']}")
-
-    # --- THE ACCESSIBILITY FIX: Mic & Text Input ---
-    st.markdown("### Ask a Question")
-    
-    # 1. The Physical Mic Button (Accessible via Tab & Spacebar)
-    spoken_text = speech_to_text(
-        language='en',
-        start_prompt="🎤 Click to Speak",
-        stop_prompt="🛑 Stop Recording",
-        just_once=True,
-        key='STT'
-    )
-    
-    # 2. Backup Text Input
-    typed_text = st.chat_input("Or type your question here...")
-    
-    # Capture whichever input the user used
-    user_query = spoken_text if spoken_text else typed_text
-    
-    # Process the query
-    if user_query and st.session_state.current_image:
-        st.session_state.chat_history.append({"role": "user", "content": user_query})
-        
-        with st.spinner("Analyzing diagram..."):
-            time.sleep(1.5) # Simulating AI processing
-            ai_response = f"I heard you ask: '{user_query}'. Based on the diagram, the components are in series."
+                # Handle Image File
+                img = Image.open(uploaded_file).convert("RGB")
+                img.save(processed_image_path, dpi=(300, 300))
+                st.success("✅ Image optimized to 300 DPI.")
             
-        st.session_state.chat_history.append({"role": "ai", "content": ai_response})
-        
-        # Generate Voice Playback
-        audio_path = generate_audio(ai_response)
-        st.audio(audio_path, format="audio/mp3", autoplay=True)
-        
-        st.rerun()
-        
-    elif user_query and not st.session_state.current_image:
-        st.warning("Please upload an image first!")
+            # Display optimized image
+            st.image(img, caption="Ready for AI Analysis", use_container_width=True)
+
+            st.header("2. Ask a Question")
+            st.markdown("*(Use **Win+H** to dictate into the text box, or upload an audio recording)*")
+            
+            # Text Input
+            text_query = st.text_input("Type your question here:")
+            
+            # Voice Input (Streamlit native audio recorder)
+            audio_query = st.audio_input("Or Record Voice Question")
+
+            final_query = ""
+
+            # Process Audio with Faster-Whisper if recorded
+            if audio_query is not None:
+                with open("temp/audio.wav", "wb") as f:
+                    f.write(audio_query.getbuffer())
+                st.info("Transcribing audio locally...")
+                segments, info = whisper_model.transcribe("temp/audio.wav", beam_size=5)
+                final_query = " ".join([segment.text for segment in segments])
+                st.success(f"**Whisper Output:** {final_query}")
+            
+            # Prefer text if both are provided, otherwise use audio transcription
+            if text_query:
+                final_query = text_query
+
+            # EXPORT TO JSON FOR COLAB
+            if final_query:
+                output_data = {
+                    "task": "Vision Analysis",
+                    "image_file": "processed_image.png",
+                    "user_query": final_query
+                }
+                with open(json_export_path, "w") as f:
+                    json.dump(output_data, f, indent=4)
+                
+                st.info("⬇️ **Copy this Prompt for Google Colab:**")
+                st.code(final_query, language="text")
+                st.caption("Upload `temp/processed_image.png` to your Colab notebook and use the prompt above.")
+
+        except Exception as e:
+            st.error(f"Error processing file: {e}")
+
+
+# ==========================================
+# COLUMN 2: COLAB OUTPUT & TTS (From Colab)
+# ==========================================
+with col2:
+    st.header("3. AI Response & Audio")
+    st.markdown("Paste the output generated by **Qwen-2VL** in Colab here to generate the speech.")
+    
+    colab_output = st.text_area("Paste Colab Output Here:", height=200)
+    
+    if st.button("Generate Audio (Text-to-Speech)", type="primary"):
+        if colab_output.strip() == "":
+            st.warning("Please paste the text from Colab first.")
+        else:
+            with st.spinner("Generating natural speech..."):
+                try:
+                    # Convert text to speech using Google TTS
+                    tts = gTTS(text=colab_output, lang='en', tld='co.in') # Uses Indian English accent
+                    audio_path = "temp/response.mp3"
+                    tts.save(audio_path)
+                    
+                    st.success("Audio Generated!")
+                    st.audio(audio_path, format="audio/mp3", autoplay=True)
+                except Exception as e:
+                    st.error(f"Error generating audio: {e}")
