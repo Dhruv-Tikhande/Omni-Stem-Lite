@@ -1,0 +1,79 @@
+{
+    "default": {
+        "documents": {
+            "LDR-circuit-improved.png": {
+                "text_content": "",
+                "diagrams": [
+                    {
+                        "page_or_index": "Image 1",
+                        "json_metadata": {
+                            "diagram_type": "circuit_diagram",
+                            "components": [
+                                {
+                                    "id": "9V battery",
+                                    "type": "battery",
+                                    "label": "9V Battery",
+                                    "position": "top left"
+                                },
+                                {
+                                    "id": "LDR",
+                                    "type": "sensor",
+                                    "label": "Light Dependent Resistor",
+                                    "position": "center top"
+                                },
+                                {
+                                    "id": "R1",
+                                    "type": "resistor",
+                                    "label": "390Ω Resistor",
+                                    "position": "right side of LDR"
+                                },
+                                {
+                                    "id": "LED",
+                                    "type": "light-emitting diode",
+                                    "label": "LED",
+                                    "position": "right side of R1"
+                                },
+                                {
+                                    "id": "Q1",
+                                    "type": "transistor",
+                                    "label": "BC547 Transistor",
+                                    "position": "bottom right"
+                                },
+                                {
+                                    "id": "R2",
+                                    "type": "resistor",
+                                    "label": "100kΩ Resistor",
+                                    "position": "bottom center"
+                                }
+                            ],
+                            "relationships": [
+                                {
+                                    "from": "LDR",
+                                    "to": "R1",
+                                    "relationship": "connected to"
+                                },
+                                {
+                                    "from": "R1",
+                                    "to": "LED",
+                                    "relationship": "connected to"
+                                },
+                                {
+                                    "from": "Q1",
+                                    "to": "R2",
+                                    "relationship": "connected to"
+                                },
+                                {
+                                    "from": "Q1",
+                                    "to": "LED",
+                                    "relationship": "connected to"
+                                }
+                            ],
+                            "clarification_required": false,
+                            "candidate_entities": []
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}

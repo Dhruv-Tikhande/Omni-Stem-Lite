@@ -1,0 +1,22 @@
+# Core API & Backend Server
+fastapi
+uvicorn
+python-multipart
+pydantic
+requests
+
+# Frontend UI & Processing
+streamlit
+fitz
+PyMuPDF
+Pillow
+faster-whisper
+gTTS
+python-docx
+
+# Memory & AI Dependencies
+faiss-cpu
+numpy
+sentence-transformers
+torch
+torchvision

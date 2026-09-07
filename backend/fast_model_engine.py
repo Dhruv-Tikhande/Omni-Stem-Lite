@@ -1,85 +1,96 @@
 import time
-import torch
-from transformers import Qwen2VLForConditionalGeneration, AutoProcessor, BitsAndBytesConfig
-from PIL import Image
+import json
+import base64
+import requests
+from pydantic import BaseModel, Field, ValidationError
+from typing import List, Dict, Any
 
-MODEL_NAME = "Qwen/Qwen2-VL-2B-Instruct"
+class VisionAnalysis(BaseModel):
+    diagram_type: str = Field(default="Unknown")
+    components: List[Dict[str, str]] = Field(default_factory=list)
+    relationships: List[Dict[str, str]] = Field(default_factory=list)
+    clarification_required: bool = Field(default=False)
+    candidate_entities: List[str] = Field(default_factory=list)
 
-print("🚀 Loading VLM Engine on Windows with 4-bit Quantization...")
-start_load = time.time()
-
-# 1. Check if GPU is available
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
-# 2. Configure 4-bit quantization (if using GPU)
-bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=torch.float16
-) if device == "cuda" else None
-
-# 3. Use the CORRECT Multimodal Model Class (Fixes the ValueError!)
-model = Qwen2VLForConditionalGeneration.from_pretrained(
-    MODEL_NAME,
-    quantization_config=bnb_config,
-    device_map="auto" if device == "cuda" else None,
-    torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-    trust_remote_code=True
-)
-
-# 4. Load the Multimodal Processor (Handles both image and text tokenization)
-processor = AutoProcessor.from_pretrained(MODEL_NAME, trust_remote_code=True)
-
-print(f"✅ Model loaded in {time.time() - start_load:.2f}s on {device.upper()}")
-
-
-def generate_stem_response(image_path, user_query):
-    start_time = time.time()
-    image = Image.open(image_path)
-
-    # Prepare chat message format expected by Qwen2-VL
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "image": image},
-                {"type": "text", "text": f"Question: {user_query}\nAnswer concisely and step-by-step for a visually impaired student:"}
-            ]
-        }
-    ]
-
-    # Process prompt & image into tensors
-    text_prompt = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-    inputs = processor(
-        text=[text_prompt],
-        images=[image],
-        padding=True,
-        return_tensors="pt"
-    ).to(device)
-
-    # Generate response
-    with torch.no_grad():
-        generated_ids = model.generate(
-            **inputs,
-            max_new_tokens=256,
-            do_sample=False
-        )
-
-    # Trim input tokens from output to get only the answer
-    generated_ids_trimmed = [
-        out_ids[len(in_ids):] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
-    ]
-    response_text = processor.batch_decode(
-        generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
-    )[0]
-
-    latency = time.time() - start_time
-    print(f"✨ Response Generated in {latency:.2f}s!")
-    print(f"🤖 Output: {response_text.strip()}")
+def fallback_json_parser(raw_text: str) -> dict:
+    """Attempts to extract and parse JSON from a raw model response."""
+    # First, try to parse directly
+    try:
+        return json.loads(raw_text)
+    except json.JSONDecodeError:
+        pass
+        
+    # Second, try finding a JSON block (e.g., inside ```json ... ``` or just {...})
+    start_idx = raw_text.find('{')
+    end_idx = raw_text.rfind('}')
     
-    return response_text, latency
+    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+        try:
+            return json.loads(raw_text[start_idx:end_idx+1])
+        except json.JSONDecodeError:
+            pass
+            
+    # Absolute fallback if all parsing fails
+    print("⚠️ Failed to parse valid JSON from model response. Using fallback schema.")
+    return {
+        "diagram_type": "Parse Error",
+        "components": [{"error": "Could not parse components"}],
+        "relationships": [],
+        "clarification_required": True,
+        "candidate_entities": []
+    }
 
+def analyze_diagram_remote(image_path: str, user_query: str, colab_url: str):
+    start_time = time.time()
+    import os
+    
+    print(f"🚀 Sending request to Remote Colab Server at {colab_url}...")
+    try:
+        # Send multipart/form-data request to the remote Colab server
+        with open(image_path, "rb") as image_file:
+            files = {"file": (os.path.basename(image_path), image_file, "image/png")}
+            data = {"user_query": user_query}
+            
+            response = requests.post(f"{colab_url.rstrip('/')}/analyze", files=files, data=data, timeout=120)
+            response.raise_for_status()
+            
+        resp_json = response.json()
+        
+        if resp_json.get("status") == "success":
+            parsed_json = resp_json.get("data", {})
+        else:
+            raw_output = resp_json.get("raw", "{}")
+            print(f"⚠️ Colab parsing error: {resp_json.get('message')}. Attempting local fallback parse on raw output...")
+            parsed_json = fallback_json_parser(raw_output)
+            
+    except Exception as e:
+        print(f"❌ Error communicating with Colab: {e}")
+        parsed_json = fallback_json_parser("{}")
+        
+    latency = time.time() - start_time
+    print(f"✨ Response Received in {latency:.2f}s!")
+    
+    try:
+        validated_data = VisionAnalysis(**parsed_json)
+    except ValidationError as e:
+        print(f"⚠️ Validation Error: {e}")
+        # Use fallback if validation fails completely
+        validated_data = VisionAnalysis(
+            diagram_type="Validation Error",
+            clarification_required=True
+        )
+        
+    return validated_data.model_dump(), latency
 
 # --- Local Test Execution ---
-# Replace with a test image and query
-generate_stem_response("processed_images/page_1_300dpi.png", "What is shown in this diagram?")
+if __name__ == "__main__":
+    # Replace with a test image, query and your actual Colab ngrok URL
+    try:
+        res, lat = analyze_diagram_remote(
+            "processed_images/page_1_300dpi.png", 
+            "What is shown in this diagram?", 
+            "http://localhost:8000"
+        )
+        print(f"Test Result:\n{json.dumps(res, indent=2)}")
+    except Exception as e:
+        print(f"Test failed: {e}")
