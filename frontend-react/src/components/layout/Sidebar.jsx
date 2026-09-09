@@ -60,8 +60,9 @@ export default function Sidebar({ onClose, isOpen }) {
     if (!file) return;
     try {
       const result = await ingestDocument(file);
-      if (result.success) {
-        toast.success(`${file.name} ingested successfully`);
+      if (result.status === 'success') {
+        const { text_blocks, visuals_processed, cache_hits } = result.telemetry || {};
+        toast.success(`Ingested: ${text_blocks} text blocks, ${visuals_processed} visuals (${cache_hits} cached)`);
       } else {
         toast.error(result.error || 'Ingestion failed');
       }

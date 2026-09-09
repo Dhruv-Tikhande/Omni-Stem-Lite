@@ -4,7 +4,9 @@ import time
 import datetime
 import requests
 
-CHATS_DIR = "backend/chats"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CHATS_DIR = os.path.join(BASE_DIR, "chats")
+LAYOUT_CACHE_DIR = os.path.join(BASE_DIR, "layout_cache")
 
 # Read Colab URL from env — same source of truth as main.py
 COLAB_API_URL = os.getenv(
@@ -134,6 +136,34 @@ def _format_structural_diagram(meta: dict, idx: int, loc: str) -> list:
     return lines
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Semantic Compression
+# ─────────────────────────────────────────────────────────────────────────────
+def _compress_json_payload(data):
+    """Recursively removes None, null, empty lists, and raw coordinate fields."""
+    if isinstance(data, dict):
+        compressed = {}
+        for k, v in data.items():
+            if v is None or v == [] or v == "":
+                continue
+            k_lower = k.lower()
+            if k_lower in {"bounding_box", "box", "x", "y", "width", "height", "pixel_coords", "coordinates"}:
+                continue
+            
+            compressed_val = _compress_json_payload(v)
+            if compressed_val is not None and compressed_val != [] and compressed_val != {}:
+                compressed[k] = compressed_val
+        return compressed
+    elif isinstance(data, list):
+        compressed = []
+        for item in data:
+            compressed_val = _compress_json_payload(item)
+            if compressed_val is not None and compressed_val != [] and compressed_val != {}:
+                compressed.append(compressed_val)
+        return compressed
+    else:
+        return data
+
 def _build_context_block(session_data: dict) -> str:
     if not session_data or not session_data.get("documents"):
         return "No prior document context available."
@@ -148,12 +178,29 @@ def _build_context_block(session_data: dict) -> str:
         else:
             lines.append("[Text Excerpt] None found.")
 
-        diagrams = doc_data.get("diagrams", [])
-        if diagrams:
-            lines.append(f"\n[Extracted Diagrams — {len(diagrams)} total]")
-            for idx, diag in enumerate(diagrams, 1):
-                loc  = diag.get("page_or_index", f"Diagram {idx}")
-                meta = diag.get("json_metadata", {})
+        visual_hashes = doc_data.get("visual_hashes", [])
+        if visual_hashes:
+            lines.append(f"\n[Extracted Diagrams — {len(visual_hashes)} total]")
+            for idx, item in enumerate(visual_hashes, 1):
+                loc = item.get("page_or_index", f"Diagram {idx}")
+                md5_hash = item.get("hash")
+                
+                if not md5_hash:
+                    lines.append(f"  Diagram {idx} ({loc}): [Missing Hash]")
+                    continue
+                    
+                cache_path = os.path.join(LAYOUT_CACHE_DIR, f"{md5_hash}.json")
+                if not os.path.exists(cache_path):
+                    lines.append(f"  Diagram {idx} ({loc}): [Cache Miss]")
+                    continue
+                    
+                try:
+                    with open(cache_path, "r", encoding="utf-8") as f:
+                        meta = json.load(f)
+                    meta = _compress_json_payload(meta)
+                except json.JSONDecodeError:
+                    meta = {"error": "Invalid cache JSON"}
+
                 if meta.get("error"):
                     lines.append(f"  Diagram {idx} ({loc}): [Processing failed: {meta['error']}]")
                     continue
@@ -176,10 +223,21 @@ def _build_context_block(session_data: dict) -> str:
 def _detect_categories(session_data: dict) -> set:
     categories = set()
     for doc_data in session_data.get("documents", {}).values():
-        for diag in doc_data.get("diagrams", []):
-            d_type = diag.get("json_metadata", {}).get("diagram_type", "")
-            if d_type:
-                categories.add(_classify(d_type))
+        for item in doc_data.get("visual_hashes", []):
+            md5_hash = item.get("hash")
+            if not md5_hash:
+                continue
+            
+            cache_path = os.path.join(LAYOUT_CACHE_DIR, f"{md5_hash}.json")
+            if os.path.exists(cache_path):
+                try:
+                    with open(cache_path, "r", encoding="utf-8") as f:
+                        meta = json.load(f)
+                    d_type = meta.get("diagram_type", "")
+                    if d_type:
+                        categories.add(_classify(d_type))
+                except json.JSONDecodeError:
+                    pass
     return categories
 
 
@@ -233,7 +291,7 @@ RULES:
 }
 
 
-def _build_master_prompt(user_query: str, context_block: str, categories: set) -> str:
+def _build_master_prompt(user_query: str, context_block: str, categories: set, session_history: list) -> list:
     for priority in ("chart", "schematic", "table", "biological", "geometric", "general"):
         if priority in categories:
             instructions = _INSTRUCTIONS[priority]
@@ -241,28 +299,39 @@ def _build_master_prompt(user_query: str, context_block: str, categories: set) -
     else:
         instructions = _INSTRUCTIONS["general"]
 
-    return f"""You are an expert STEM Tutor for visually impaired students.
-
-DOCUMENT CONTEXT:
-{context_block}
-
-STUDENT QUESTION:
-\"{user_query}\"
+    system_prompt = f"""You are an expert STEM Tutor for visually impaired students.
 
 {instructions}
 
-Do NOT mention "JSON", "context block", "session memory", or any internal system terms.
+Do NOT mention "JSON", "context block", "session memory", or any internal system terms."""
 
-RESPONSE:"""
+    messages = [
+        {"role": "system", "content": system_prompt}
+    ]
+    
+    if context_block.strip():
+        messages.append({"role": "system", "content": f"DOCUMENT CONTEXT:\n{context_block}"})
+        
+    sliced_history = session_history[-12:] if len(session_history) > 12 else session_history
+    messages.extend(sliced_history)
+    messages.append({"role": "user", "content": user_query})
+    
+    return messages
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Colab HTTP Call
 # ─────────────────────────────────────────────────────────────────────────────
-def _call_colab_text(master_prompt: str) -> str:
+def _call_colab_text(messages: list) -> str:
     endpoint = f"{COLAB_API_URL}/chat"
     print(f"  → Calling Colab: {endpoint}")
-    resp = requests.post(endpoint, json={"prompt": master_prompt}, timeout=120)
+    
+    # The upgraded Colab notebook expects the messages array under the 'prompt' key
+    payload = {
+        "prompt": messages
+    }
+    
+    resp = requests.post(endpoint, json=payload, timeout=120)
     resp.raise_for_status()
     data = resp.json()
     ai_text = data.get("response") or data.get("text") or ""
@@ -284,17 +353,18 @@ def generate_accessible_response(session_id: str, user_query: str) -> dict:
     print(f"\n[ReasoningEngine] Session: {session_id} | Query: {user_query}")
 
     session_data  = _load_session(session_id)
+    session_history = session_data.get("messages", [])
     context_found = bool(session_data.get("documents"))
 
     context_block = _build_context_block(session_data)
     categories    = _detect_categories(session_data)
-    master_prompt = _build_master_prompt(user_query, context_block, categories)
+    messages_payload = _build_master_prompt(user_query, context_block, categories, session_history)
 
     print(f"  → Context found: {context_found} | Categories: {categories or {'none'}}")
-    print(f"  → Prompt: {len(master_prompt)} chars → Colab...")
+    print(f"  → Payload: {len(messages_payload)} messages → Colab...")
 
     try:
-        ai_response = _call_colab_text(master_prompt)
+        ai_response = _call_colab_text(messages_payload)
         print("  → Colab OK.")
     except requests.exceptions.Timeout:
         ai_response = (

@@ -88,11 +88,13 @@ export function ChatProvider({ children }) {
     setIsIngesting(true);
     try {
       const result = await api.ingestDocument(file, sessionId);
-      if (result.success) {
+      if (result.status === 'success') {
+        const { text_blocks, visuals_processed, cache_hits } = result.telemetry || {};
         setActiveDocument(file.name);
+        if (result.session_id) setSessionId(result.session_id);
         setMessages([{
           role: 'assistant',
-          content: `📄 I've finished processing **${file.name}**. ${result.summary} Ask me anything about it!`,
+          content: `📄 I've finished processing **${file.name}**. Extracted ${text_blocks} text blocks, ${visuals_processed} visuals (${cache_hits} cached). Ask me anything about it!`,
         }]);
         await refreshSessions();
       }

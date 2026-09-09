@@ -4,6 +4,7 @@ import datetime
 import fitz  # PyMuPDF
 import io
 import docx
+import hashlib
 from PIL import Image
 
 try:
@@ -11,19 +12,27 @@ try:
 except ImportError:
     from backend.fast_model_engine import analyze_diagram_remote
 
-CHATS_DIR  = "backend/chats"
-ASSETS_DIR = "temp_assets"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CHATS_DIR  = os.path.join(BASE_DIR, "chats")
+ASSETS_DIR = os.path.join(BASE_DIR, "..", "temp_assets")
+LAYOUT_CACHE_DIR = os.path.join(BASE_DIR, "layout_cache")
 
 os.makedirs(CHATS_DIR, exist_ok=True)
 os.makedirs(ASSETS_DIR, exist_ok=True)
+os.makedirs(LAYOUT_CACHE_DIR, exist_ok=True)
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Hash Helper
+# ─────────────────────────────────────────────────────────────────────────────
+def _compute_md5(file_path: str) -> str:
+    with open(file_path, 'rb') as f:
+        return hashlib.md5(f.read()).hexdigest()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Session File Helpers
 # ─────────────────────────────────────────────────────────────────────────────
 def _session_path(session_id: str) -> str:
     return os.path.join(CHATS_DIR, f"{session_id}.json")
-
 
 def _load_session_file(session_id: str) -> dict:
     path = _session_path(session_id)
@@ -35,36 +44,31 @@ def _load_session_file(session_id: str) -> dict:
         except json.JSONDecodeError:
             return {"title": "New Chat", "documents": {}, "messages": []}
 
-
 def _write_session_file(session_id: str, data: dict) -> None:
     path = _session_path(session_id)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
-
-def save_to_session(session_id: str, document_name: str, text_content: str, diagrams: list) -> None:
+def save_to_session(session_id: str, document_name: str, text_content: str, visual_hashes: list) -> None:
     """
     Completely overwrites the document context for this session.
     Preserves any existing chat message history.
-    Sets the session title from the document filename.
+    Stores only the extracted text and an array of MD5 image hashes.
     """
     existing = _load_session_file(session_id)
 
-    existing["title"]     = document_name          # title = ingested filename
-    existing["documents"] = {                       # full overwrite of doc context
+    existing["title"]     = document_name
+    existing["documents"] = {
         document_name: {
             "text_content": text_content,
-            "diagrams":     diagrams
+            "visual_hashes": visual_hashes  # Changed from diagrams
         }
     }
-    # Set created_at only on first creation — never overwrite
+    
     if "created_at" not in existing:
         existing["created_at"] = datetime.datetime.utcnow().isoformat()
 
-    # messages are PRESERVED — ingestion doesn't wipe conversation history
-
     _write_session_file(session_id, existing)
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # File Parsers
@@ -88,10 +92,15 @@ def process_pdf(file_path: str):
 
             with open(img_path, "wb") as f:
                 f.write(image_bytes)
-            images.append({"page_or_index": f"Page {page_num}", "path": img_path})
+                
+            md5_hash = _compute_md5(img_path)
+            images.append({
+                "page_or_index": f"Page {page_num}", 
+                "path": img_path,
+                "hash": md5_hash
+            })
 
     return text_content, images
-
 
 def process_docx(file_path: str):
     doc = docx.Document(file_path)
@@ -105,17 +114,23 @@ def process_docx(file_path: str):
         img_path     = os.path.join(ASSETS_DIR, img_filename)
         with open(img_path, "wb") as f:
             f.write(rel.target_part.blob)
-        images.append({"page_or_index": f"Index {img_index}", "path": img_path})
+            
+        md5_hash = _compute_md5(img_path)
+        images.append({
+            "page_or_index": f"Index {img_index}", 
+            "path": img_path,
+            "hash": md5_hash
+        })
 
     return text_content, images
-
 
 def process_image(file_path: str):
     img_filename = os.path.basename(file_path)
     img_path     = os.path.join(ASSETS_DIR, img_filename)
     Image.open(file_path).save(img_path)
-    return "", [{"page_or_index": "Image 1", "path": img_path}]
-
+    
+    md5_hash = _compute_md5(img_path)
+    return "", [{"page_or_index": "Image 1", "path": img_path, "hash": md5_hash}]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Main Ingestion Entry Point
@@ -132,30 +147,48 @@ def ingest_document(file_path: str, colab_url: str, session_id: str = "default")
     else:
         raise ValueError(f"Unsupported file format: {filename}")
 
-    diagrams_json = []
+    visual_hashes = []
+    
+    # Telemetry tracking
+    telemetry = {
+        "text_blocks": max(1, len(text_content) // 2000) if text_content else 0,
+        "visuals_processed": len(images),
+        "cache_hits": 0
+    }
+
     for img_info in images:
         img_path = img_info["path"]
-        print(f"🧠 Processing diagram: {img_path}")
+        md5_hash = img_info["hash"]
+        page_or_index = img_info["page_or_index"]
+        
+        visual_hashes.append({
+            "hash": md5_hash,
+            "page_or_index": page_or_index
+        })
+        
+        cache_path = os.path.join(LAYOUT_CACHE_DIR, f"{md5_hash}.json")
+        
+        if os.path.exists(cache_path):
+            print(f"⚡ Cache hit for {md5_hash}")
+            telemetry["cache_hits"] += 1
+            continue
+
+        print(f"🧠 Processing diagram (Cache Miss): {img_path}")
         try:
             ai_response_dict, _ = analyze_diagram_remote(
                 img_path,
                 "Extract layout, type, and all data in detail.",
                 colab_url
             )
-            diagrams_json.append({
-                "page_or_index": img_info["page_or_index"],
-                "json_metadata": ai_response_dict
-            })
+            # Write structured JSON to cache
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(ai_response_dict, f, indent=4, ensure_ascii=False)
+                
         except Exception as e:
             print(f"⚠️ Failed to process {img_path}: {e}")
-            diagrams_json.append({
-                "page_or_index": img_info["page_or_index"],
-                "json_metadata": {"error": str(e)}
-            })
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump({"error": str(e)}, f, indent=4, ensure_ascii=False)
 
-    save_to_session(session_id, os.path.basename(file_path), text_content, diagrams_json)
+    save_to_session(session_id, os.path.basename(file_path), text_content, visual_hashes)
 
-    return {
-        "text_pages_est":    max(1, len(text_content) // 2000) if text_content else 0,
-        "diagrams_extracted": len(diagrams_json)
-    }
+    return telemetry

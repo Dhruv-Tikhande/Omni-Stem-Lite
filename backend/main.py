@@ -25,8 +25,10 @@ COLAB_API_URL = os.getenv(
     "https://both-seventeen-laboring.ngrok-free.dev"
 ).rstrip("/")
 
-CHATS_DIR = "backend/chats"
-os.makedirs("temp_uploads", exist_ok=True)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CHATS_DIR = os.path.join(BASE_DIR, "chats")
+TEMP_UPLOADS_DIR = os.path.join(BASE_DIR, "..", "temp_uploads")
+os.makedirs(TEMP_UPLOADS_DIR, exist_ok=True)
 os.makedirs(CHATS_DIR, exist_ok=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -116,7 +118,7 @@ def get_session(session_id: str):
     doc_summary = {}
     for doc_name, doc_data in data.get("documents", {}).items():
         doc_summary[doc_name] = {
-            "diagram_count": len(doc_data.get("diagrams", [])),
+            "diagram_count": len(doc_data.get("visual_hashes", [])),
             "has_text": bool((doc_data.get("text_content") or "").strip())
         }
 
@@ -231,21 +233,17 @@ async def ingest_document_api(
     if not COLAB_API_URL:
         raise HTTPException(status_code=500, detail="COLAB_API_URL is missing.")
 
-    temp_path = f"temp_uploads/{file.filename}"
+    temp_path = os.path.join(TEMP_UPLOADS_DIR, file.filename)
     with open(temp_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
     try:
-        summary = ingest_document(temp_path, COLAB_API_URL, session_id)
+        telemetry = ingest_document(temp_path, COLAB_API_URL, session_id)
         os.remove(temp_path)
         return {
-            "success":    True,
+            "status": "success",
             "session_id": session_id,
-            "message":    f"Successfully ingested {file.filename}",
-            "summary":    (
-                f"Extracted {summary['diagrams_extracted']} diagram(s) "
-                f"and ~{summary['text_pages_est']} page(s) of text."
-            )
+            "telemetry": telemetry
         }
     except Exception as e:
         print(f"❌ Ingestion error: {e}")

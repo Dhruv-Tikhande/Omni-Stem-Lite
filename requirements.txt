@@ -7,7 +7,6 @@ requests
 
 # Frontend UI & Processing
 streamlit
-fitz
 PyMuPDF
 Pillow
 faster-whisper

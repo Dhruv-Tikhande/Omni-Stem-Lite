@@ -47,8 +47,10 @@ export default function ChatComposer() {
     if (!file) return;
     try {
       const result = await ingestDocument(file);
-      if (result.success) toast.success(`${file.name} ingested`);
-      else toast.error(result.error || 'Failed');
+      if (result.status === 'success') {
+        const { text_blocks, visuals_processed, cache_hits } = result.telemetry || {};
+        toast.success(`Ingested: ${text_blocks} text blocks, ${visuals_processed} visuals (${cache_hits} cached)`);
+      } else toast.error(result.error || 'Failed');
     } catch (err) { toast.error(err.message); }
     e.target.value = '';
   };

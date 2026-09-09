@@ -3,14 +3,17 @@ import json
 import base64
 import requests
 from pydantic import BaseModel, Field, ValidationError
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 class VisionAnalysis(BaseModel):
     diagram_type: str = Field(default="Unknown")
-    components: List[Dict[str, str]] = Field(default_factory=list)
-    relationships: List[Dict[str, str]] = Field(default_factory=list)
-    clarification_required: bool = Field(default=False)
-    candidate_entities: List[str] = Field(default_factory=list)
+    title: Optional[str] = Field(default=None)
+    chart_data: Optional[Dict] = Field(default=None)
+    components: Optional[List[Dict]] = Field(default_factory=list)
+    relationships: Optional[List[Dict]] = Field(default_factory=list)
+    key_takeaway: Optional[str] = Field(default=None)
+    clarification_required: Optional[bool] = Field(default=False)
+    candidate_entities: Optional[List[str]] = Field(default_factory=list)
 
 def fallback_json_parser(raw_text: str) -> dict:
     """Attempts to extract and parse JSON from a raw model response."""
@@ -45,41 +48,49 @@ def analyze_diagram_remote(image_path: str, user_query: str, colab_url: str):
     import os
     
     print(f"🚀 Sending request to Remote Colab Server at {colab_url}...")
-    try:
-        # Send multipart/form-data request to the remote Colab server
-        with open(image_path, "rb") as image_file:
-            files = {"file": (os.path.basename(image_path), image_file, "image/png")}
-            data = {"user_query": user_query}
+    
+    parsed_json = {}
+    for attempt in range(2):
+        try:
+            with open(image_path, "rb") as image_file:
+                files = {"file": (os.path.basename(image_path), image_file, "image/png")}
+                data = {"user_query": user_query}
+                
+                response = requests.post(f"{colab_url.rstrip('/')}/analyze", files=files, data=data, timeout=120)
+                response.raise_for_status()
+                
+            resp_json = response.json()
             
-            response = requests.post(f"{colab_url.rstrip('/')}/analyze", files=files, data=data, timeout=120)
-            response.raise_for_status()
+            if resp_json.get("status") == "success":
+                parsed_json = resp_json.get("data", {})
+            else:
+                raw_output = resp_json.get("raw", "{}")
+                print(f"⚠️ Colab parsing error: {resp_json.get('message')}. Attempting local fallback parse on raw output...")
+                parsed_json = fallback_json_parser(raw_output)
             
-        resp_json = response.json()
-        
-        if resp_json.get("status") == "success":
-            parsed_json = resp_json.get("data", {})
-        else:
-            raw_output = resp_json.get("raw", "{}")
-            print(f"⚠️ Colab parsing error: {resp_json.get('message')}. Attempting local fallback parse on raw output...")
-            parsed_json = fallback_json_parser(raw_output)
+            # Validate immediately inside the loop to trigger a retry if validation fails
+            validated_data = VisionAnalysis(**parsed_json)
+            break  # Success! Break out of the retry loop.
             
-    except Exception as e:
-        print(f"❌ Error communicating with Colab: {e}")
-        parsed_json = fallback_json_parser("{}")
-        
+        except (requests.exceptions.RequestException, json.JSONDecodeError, ValidationError) as e:
+            print(f"⚠️ Attempt {attempt + 1} failed: {e}")
+            if attempt == 1:
+                print(f"❌ Final attempt failed. Using safe fallback schema.")
+                validated_data = VisionAnalysis(
+                    diagram_type="Parse Error",
+                    clarification_required=True
+                )
+        except Exception as e:
+            print(f"❌ Unexpected error communicating with Colab: {e}")
+            validated_data = VisionAnalysis(
+                diagram_type="Parse Error",
+                clarification_required=True
+            )
+            break
+            
     latency = time.time() - start_time
     print(f"✨ Response Received in {latency:.2f}s!")
     
-    try:
-        validated_data = VisionAnalysis(**parsed_json)
-    except ValidationError as e:
-        print(f"⚠️ Validation Error: {e}")
-        # Use fallback if validation fails completely
-        validated_data = VisionAnalysis(
-            diagram_type="Validation Error",
-            clarification_required=True
-        )
-        
     return validated_data.model_dump(), latency
 
 # --- Local Test Execution ---

@@ -1,0 +1,31 @@
+{
+    "diagram_type": "bar_chart",
+    "title": null,
+    "chart_data": {
+        "x_axis": "Academic Subject",
+        "y_axis": "Average Score (%)",
+        "data_points": [
+            {
+                "label": "Mathematics",
+                "value": "85%"
+            },
+            {
+                "label": "Physics",
+                "value": "78%"
+            },
+            {
+                "label": "Biology",
+                "value": "92%"
+            },
+            {
+                "label": "Chemistry",
+                "value": "88%"
+            }
+        ]
+    },
+    "components": [],
+    "relationships": [],
+    "key_takeaway": null,
+    "clarification_required": false,
+    "candidate_entities": []
+}
