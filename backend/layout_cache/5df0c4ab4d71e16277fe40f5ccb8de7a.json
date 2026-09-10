@@ -1,0 +1,35 @@
+{
+    "diagram_type": "bar_chart",
+    "title": null,
+    "chart_data": {
+        "x_axis": "Types of school supplies",
+        "y_axis": "Number of supplies",
+        "data_points": [
+            {
+                "label": "Pencil",
+                "value": 8
+            },
+            {
+                "label": "Scale",
+                "value": 3
+            },
+            {
+                "label": "Pen",
+                "value": 2
+            },
+            {
+                "label": "Sharpener",
+                "value": 5
+            },
+            {
+                "label": "Eraser",
+                "value": 4
+            }
+        ]
+    },
+    "components": [],
+    "relationships": [],
+    "key_takeaway": null,
+    "clarification_required": false,
+    "candidate_entities": []
+}

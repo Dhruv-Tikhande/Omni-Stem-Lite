@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { playMicStart, playProcessing, playError } from '../utils/audioCues';
+import { useAccessibility } from '../contexts/AccessibilityContext';
 
 export const usePushToTalk = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -9,11 +10,12 @@ export const usePushToTalk = () => {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const streamRef = useRef(null);
+  const { announce } = useAccessibility();
 
   const startRecording = useCallback(async () => {
     try {
       setError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
       streamRef.current = stream;
       
       playMicStart(); // Trigger native mic open cue
@@ -40,6 +42,7 @@ export const usePushToTalk = () => {
 
         // Send to backend endpoint
         try {
+          announce("Processing audio...");
           playProcessing(); // Native tone to indicate processing
           
           const formData = new FormData();
@@ -56,6 +59,7 @@ export const usePushToTalk = () => {
           
           const data = await response.json();
           if (data.success && data.text) {
+            announce("Transcription complete.");
             // Append or set the transcript
             setTranscript(prev => prev ? `${prev} ${data.text}` : data.text);
           } else if (data.error) {
@@ -63,6 +67,7 @@ export const usePushToTalk = () => {
           }
         } catch (err) {
           console.error('Transcription error:', err);
+          announce("Error accessing microphone.");
           playError(); // Trigger error cue
           setError(err.message);
         }
@@ -72,6 +77,7 @@ export const usePushToTalk = () => {
       setIsRecording(true);
     } catch (err) {
       console.error('Microphone error:', err);
+      announce("Error accessing microphone.");
       playError(); // Trigger error cue for permission denied
       setError('Microphone access denied or unavailable.');
     }

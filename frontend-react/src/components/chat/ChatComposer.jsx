@@ -1,11 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useChat } from '../../contexts/ChatContext';
+import { usePushToTalk } from '../../hooks/usePushToTalk';
 import { toast } from 'sonner';
 import { Send, Paperclip, Mic, MicOff, Loader2, X } from 'lucide-react';
 import * as api from '../../services/api';
 
 export default function ChatComposer() {
   const { sendMessage, isLoading, ingestDocument, activeDocument } = useChat();
+  const { isRecording: pttRecording, transcript: pttTranscript, resetTranscript } = usePushToTalk();
   const [text, setText] = useState('');
   const [recording, setRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -23,6 +25,14 @@ export default function ChatComposer() {
     ta.style.height = 'auto';
     ta.style.height = Math.min(ta.scrollHeight, 200) + 'px';
   }, [text]);
+
+  // Wire Push-to-Talk transcript to input state
+  useEffect(() => {
+    if (pttTranscript) {
+      setText(prev => prev ? `${prev} ${pttTranscript}` : pttTranscript);
+      resetTranscript();
+    }
+  }, [pttTranscript, resetTranscript]);
 
   const handleSend = useCallback(async () => {
     const trimmed = text.trim();
@@ -176,6 +186,24 @@ export default function ChatComposer() {
   return (
     <div style={s.container}>
       <div style={s.inner}>
+        {pttRecording && (
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 12px',
+            background: 'var(--color-error-bg)',
+            color: 'var(--color-error)',
+            borderRadius: '9999px',
+            fontSize: '0.8rem',
+            fontWeight: 500,
+            marginBottom: '8px',
+            border: '1px solid var(--color-error)'
+          }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'currentColor', animation: 'pulse-dot 1.5s infinite' }} />
+            🎤 Recording (Spacebar)...
+          </div>
+        )}
         {recording ? (
           <div style={s.recordingBar}>
             <div style={s.recordDot} />

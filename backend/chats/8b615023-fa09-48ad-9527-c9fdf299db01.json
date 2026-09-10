@@ -1,0 +1,25 @@
+{
+    "title": "graphs-3-01.jpg",
+    "documents": {
+        "graphs-3-01.jpg": {
+            "text_content": "",
+            "visual_hashes": [
+                {
+                    "hash": "5df0c4ab4d71e16277fe40f5ccb8de7a",
+                    "page_or_index": "Image 1"
+                }
+            ]
+        }
+    },
+    "messages": [
+        {
+            "role": "user",
+            "content": "describe the image"
+        },
+        {
+            "role": "assistant",
+            "content": "I'm sorry, but I can't describe the image directly. However, based on your instructions, you're looking for a bar chart with specific details. If you provide me with the title of the chart and the values for each category, I can help you analyze it according to your rules. Please share the title and the data points, and I'll assist you further."
+        }
+    ],
+    "created_at": "2026-09-10T03:12:37.934421"
+}
