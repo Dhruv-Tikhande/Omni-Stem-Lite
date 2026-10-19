@@ -1,31 +1,291 @@
 {
-    "diagram_type": "bar_chart",
-    "title": null,
-    "chart_data": {
-        "x_axis": "Academic Subject",
-        "y_axis": "Average Score (%)",
-        "data_points": [
-            {
-                "label": "Mathematics",
-                "value": "85%"
-            },
-            {
-                "label": "Physics",
-                "value": "78%"
-            },
-            {
-                "label": "Biology",
-                "value": "92%"
-            },
-            {
-                "label": "Chemistry",
-                "value": "88%"
-            }
-        ]
+    "educational_interpretation": {
+        "concepts": [
+            "data_voting"
+        ],
+        "interpretations": [
+            "The values in 'text_right_of_chart' are approximate estimates made by the vision model."
+        ],
+        "present": true
     },
-    "components": [],
-    "relationships": [],
-    "key_takeaway": null,
-    "clarification_required": false,
-    "candidate_entities": []
+    "graph_data": {
+        "graph_type": "bar_chart",
+        "observations": [],
+        "present": true,
+        "series": [],
+        "title": "Average STEM Cohort Scores",
+        "x_axis": null,
+        "y_axis": null
+    },
+    "image_metadata": {
+        "caption": "",
+        "educational_context": "educational_diagrams",
+        "image_completeness": {
+            "missing_information": null,
+            "status": "complete"
+        },
+        "image_quality": {
+            "blur": false,
+            "cropping": false,
+            "occlusion": false,
+            "overall": "clear_and_readable",
+            "text_readability": "clear"
+        },
+        "image_type": [
+            "chart"
+        ],
+        "stem_domain": [
+            "mathematics"
+        ],
+        "subdomain": [
+            "statistics"
+        ],
+        "title": "Average STEM Cohort Scores",
+        "topic": "chart_reading"
+    },
+    "mathematical_content": {
+        "equations": [],
+        "notes": [],
+        "present": false,
+        "symbols": [],
+        "units": [],
+        "variables": []
+    },
+    "objects": [
+        {
+            "bounding_box": null,
+            "description": "Main chart",
+            "id": "obj_01",
+            "label": "Average STEM Cohort Scores",
+            "properties": [],
+            "source": "vision_model",
+            "type": "chart",
+            "uncertainty": null,
+            "units": [],
+            "values": []
+        },
+        {
+            "bounding_box": null,
+            "description": "Label for Y-axis",
+            "id": "obj_02",
+            "label": "Average Score (%)",
+            "properties": [],
+            "source": "vision_model",
+            "type": "axis",
+            "uncertainty": null,
+            "units": [
+                "%"
+            ],
+            "values": [
+                ">=0, <=100"
+            ]
+        },
+        {
+            "bounding_box": null,
+            "description": "Label for X-axis",
+            "id": "obj_03",
+            "label": "Academic Subject",
+            "properties": [],
+            "source": "vision_model",
+            "type": "axis",
+            "uncertainty": null,
+            "units": [
+                "string"
+            ],
+            "values": [
+                "Mathematics",
+                "Physics",
+                "Biology",
+                "Chemistry"
+            ]
+        },
+        {
+            "bounding_box": null,
+            "description": "A bar representing data",
+            "id": "obj_04",
+            "label": "Mathematics",
+            "properties": [],
+            "source": "vision_model",
+            "type": "data_point",
+            "uncertainty": "high",
+            "units": [
+                "string"
+            ],
+            "values": [
+                "85%"
+            ]
+        },
+        {
+            "bounding_box": null,
+            "description": "A bar representing data",
+            "id": "obj_05",
+            "label": "Physics",
+            "properties": [],
+            "source": "vision_model",
+            "type": "data_point",
+            "uncertainty": "high",
+            "units": [
+                "string"
+            ],
+            "values": [
+                "78%"
+            ]
+        },
+        {
+            "bounding_box": null,
+            "description": "A bar representing data",
+            "id": "obj_06",
+            "label": "Biology",
+            "properties": [],
+            "source": "vision_model",
+            "type": "data_point",
+            "uncertainty": "high",
+            "units": [
+                "string"
+            ],
+            "values": [
+                "92%"
+            ]
+        },
+        {
+            "bounding_box": null,
+            "description": "A bar representing data",
+            "id": "obj_07",
+            "label": "Chemistry",
+            "properties": [],
+            "source": "vision_model",
+            "type": "data_point",
+            "uncertainty": "high",
+            "units": [
+                "string"
+            ],
+            "values": [
+                "88%"
+            ]
+        }
+    ],
+    "process_information": {
+        "present": false,
+        "sequence": [],
+        "steps": []
+    },
+    "reading_order": [
+        "text_title",
+        "text_y_axis_label",
+        "text_x_axis_label",
+        "text_left_of_chart",
+        "obj_01",
+        "obj_04",
+        "obj_05",
+        "obj_06",
+        "obj_07",
+        "text_right_of_chart"
+    ],
+    "relationships": [
+        {
+            "direction": "positive",
+            "evidence": "vision_model",
+            "relationship": "text_pointing_to",
+            "source": "text_y_axis_label",
+            "target": "obj_02"
+        },
+        {
+            "direction": "positive",
+            "evidence": "vision_model",
+            "relationship": "text_pointing_to",
+            "source": "text_x_axis_label",
+            "target": "obj_03"
+        }
+    ],
+    "schema_version": "1.1",
+    "spatial_information": [
+        {
+            "evidence": "vision_model",
+            "reference": "text_x_axis_label",
+            "relation": "below",
+            "subject": "obj_01"
+        },
+        {
+            "evidence": "vision_model",
+            "reference": "text_y_axis_label",
+            "relation": "left_of",
+            "subject": "obj_01"
+        }
+    ],
+    "summary": {
+        "main_concept": null,
+        "purpose": "none",
+        "what_is_shown": "The image shows a textbook diagram titled 'Average STEM Cohort Scores'. The diagram is designed for a 'educational_diagrams' context within the 'mathematics' domain, specifically addressing the topic of 'chart_reading'. Focusing on the 'data_voting' concept, the diagram extracts 7 distinct objects. Among these, 7 are identified with 'unknown' uncertainty and 7 are extracted with 'high' reliability. The text on the left of the chart reads '0\\n20\\n40\\n60\\n80\\n100'. The text on the right of the chart reads '\\n\\n\\nScore (%)\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\nA\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n'. This detailed composition provides the structural foundation for subsequent high-level reasoning."
+    },
+    "table_data": {
+        "headers": [],
+        "notes": [],
+        "present": false,
+        "rows": [],
+        "title": null
+    },
+    "text_content": [
+        {
+            "bounding_box": null,
+            "content": "Average STEM Cohort Scores",
+            "id": "text_title",
+            "readability": "clear",
+            "reading_order_index": 1,
+            "source": "vision_model",
+            "type": "title",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "Average Score (%)",
+            "id": "text_y_axis_label",
+            "readability": "clear",
+            "reading_order_index": 2,
+            "source": "vision_model",
+            "type": "axis",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "Academic Subject",
+            "id": "text_x_axis_label",
+            "readability": "clear",
+            "reading_order_index": 3,
+            "source": "vision_model",
+            "type": "axis",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "0\n20\n40\n60\n80\n100",
+            "id": "text_left_of_chart",
+            "readability": "clear",
+            "reading_order_index": 4,
+            "source": "vision_model",
+            "type": "axis",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "\n\n\nScore (%)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nA\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+            "id": "text_right_of_chart",
+            "readability": "partially_visible",
+            "reading_order_index": 8,
+            "source": "vision_model",
+            "type": "annotation",
+            "uncertainty": null
+        }
+    ],
+    "uncertainties": [],
+    "visual_information": {
+        "highlighting": [],
+        "meaningful_colors": [],
+        "orientation": [
+            "not_applicable"
+        ],
+        "other_meaningful_visual_features": [],
+        "shapes": [
+            "bars"
+        ]
+    }
 }

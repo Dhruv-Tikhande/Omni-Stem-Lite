@@ -1,10 +1,4 @@
 {
-    "diagram_type": "biology",
-    "title": null,
-    "chart_data": null,
-    "components": [],
-    "relationships": [],
-    "key_takeaway": null,
-    "clarification_required": false,
-    "candidate_entities": []
+    "error": "Groq API returned an error (status 429): Error code: 429 - {'error': {'message': \"Request too large for model `qwen/qwen3.8-27b` in organization `org_01m2asyrxjeqtv5a9pb7mwkzjr` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Requested 1691. The request's expected output tokens exceed the enforced limit; reduce max_tokens (or the request's expected output) and try again. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\", 'type': 'tokens', 'code': 'rate_limit_exceeded'}}",
+    "parse_error": true
 }

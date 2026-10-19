@@ -1,0 +1,77 @@
+{
+    "educational_interpretation": {
+        "concepts": [],
+        "interpretations": [],
+        "present": false
+    },
+    "graph_data": {
+        "graph_type": null,
+        "observations": [],
+        "present": false,
+        "series": [],
+        "title": null,
+        "x_axis": null,
+        "y_axis": null
+    },
+    "image_metadata": {
+        "caption": null,
+        "educational_context": null,
+        "image_completeness": {
+            "missing_information": null,
+            "status": "complete"
+        },
+        "image_quality": {
+            "blur": false,
+            "cropping": false,
+            "occlusion": false,
+            "overall": "clear",
+            "text_readability": "not_applicable"
+        },
+        "image_type": [
+            "non_stem"
+        ],
+        "stem_domain": [],
+        "subdomain": [],
+        "title": null,
+        "topic": null
+    },
+    "mathematical_content": {
+        "equations": [],
+        "notes": [],
+        "present": false,
+        "symbols": [],
+        "units": [],
+        "variables": []
+    },
+    "objects": [],
+    "process_information": {
+        "present": false,
+        "sequence": [],
+        "steps": []
+    },
+    "reading_order": [],
+    "relationships": [],
+    "schema_version": "1.0",
+    "spatial_information": [],
+    "summary": {
+        "main_concept": null,
+        "purpose": null,
+        "what_is_shown": "A solid, uniform red square with no visible text, objects, or patterns."
+    },
+    "table_data": {
+        "headers": [],
+        "notes": [],
+        "present": false,
+        "rows": [],
+        "title": null
+    },
+    "text_content": [],
+    "uncertainties": [],
+    "visual_information": {
+        "highlighting": [],
+        "meaningful_colors": [],
+        "orientation": [],
+        "other_meaningful_visual_features": [],
+        "shapes": []
+    }
+}

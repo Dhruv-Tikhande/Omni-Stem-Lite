@@ -1,35 +1,308 @@
 {
-    "diagram_type": "bar_chart",
-    "title": null,
-    "chart_data": {
-        "x_axis": "Types of school supplies",
-        "y_axis": "Number of supplies",
-        "data_points": [
-            {
-                "label": "Pencil",
-                "value": 8
-            },
-            {
-                "label": "Scale",
-                "value": 3
-            },
-            {
-                "label": "Pen",
-                "value": 2
-            },
-            {
-                "label": "Sharpener",
-                "value": 5
-            },
-            {
-                "label": "Eraser",
-                "value": 4
-            }
-        ]
+    "educational_interpretation": {
+        "concepts": [
+            "bar_graph",
+            "data_summary"
+        ],
+        "interpretations": [
+            "The graph displays the count of individual school supplies items.",
+            "The highest value is 8, representing Pencil.",
+            "The lowest value is 2, representing Pen."
+        ],
+        "present": true
     },
-    "components": [],
-    "relationships": [],
-    "key_takeaway": null,
-    "clarification_required": false,
-    "candidate_entities": []
+    "graph_data": {
+        "graph_type": "vertical_bar_graph",
+        "observations": [
+            "All bars originate from the zero baseline.",
+            "Red dashed lines and arrows connect each bar's top to its value on the y-axis.",
+            "Categories are evenly spaced along the x-axis."
+        ],
+        "present": true,
+        "series": [],
+        "title": null,
+        "x_axis": "Types of school supplies",
+        "y_axis": "Number of supplies"
+    },
+    "image_metadata": {
+        "caption": null,
+        "educational_context": "Likely a primary or secondary school data interpretation exercise.",
+        "image_completeness": {
+            "missing_information": "The image appears to contain four separate panels cropped from the same graph, or the bar graph is split across multiple frames.",
+            "status": "multiple_panels_present"
+        },
+        "image_quality": {
+            "blur": false,
+            "cropping": true,
+            "occlusion": false,
+            "overall": "high",
+            "text_readability": "excellent"
+        },
+        "image_type": [
+            "graph",
+            "chart"
+        ],
+        "stem_domain": [
+            "mathematics",
+            "statistics"
+        ],
+        "subdomain": [
+            "data_representation"
+        ],
+        "title": null,
+        "topic": "Frequency distribution of school supplies"
+    },
+    "mathematical_content": {
+        "equations": [],
+        "notes": [
+            "No equations present, only numerical counts."
+        ],
+        "present": false,
+        "symbols": [],
+        "units": [],
+        "variables": []
+    },
+    "objects": [
+        {
+            "bounding_box": null,
+            "description": "First bar in the graph, colored green.",
+            "id": "object_01",
+            "label": "Pencil",
+            "properties": [],
+            "source": "direct_observation",
+            "type": "bar",
+            "uncertainty": null,
+            "units": [],
+            "values": []
+        },
+        {
+            "bounding_box": null,
+            "description": "Second bar in the graph, colored blue.",
+            "id": "object_02",
+            "label": "Scale",
+            "properties": [],
+            "source": "direct_observation",
+            "type": "bar",
+            "uncertainty": null,
+            "units": [],
+            "values": []
+        },
+        {
+            "bounding_box": null,
+            "description": "Third bar in the graph, colored yellow.",
+            "id": "object_03",
+            "label": "Pen",
+            "properties": [],
+            "source": "direct_observation",
+            "type": "bar",
+            "uncertainty": null,
+            "units": [],
+            "values": []
+        },
+        {
+            "bounding_box": null,
+            "description": "Fourth bar in the graph, colored pink.",
+            "id": "object_04",
+            "label": "Sharpener",
+            "properties": [],
+            "source": "direct_observation",
+            "type": "bar",
+            "uncertainty": null,
+            "units": [],
+            "values": []
+        },
+        {
+            "bounding_box": null,
+            "description": "Fifth bar in the graph, colored purple.",
+            "id": "object_05",
+            "label": "Eraser",
+            "properties": [],
+            "source": "direct_observation",
+            "type": "bar",
+            "uncertainty": null,
+            "units": [],
+            "values": []
+        }
+    ],
+    "process_information": {
+        "present": false,
+        "sequence": [],
+        "steps": []
+    },
+    "reading_order": [
+        "x_axis_title",
+        "y_axis_title",
+        "x_axis_label_1",
+        "x_axis_label_2",
+        "x_axis_label_3",
+        "x_axis_label_4",
+        "x_axis_label_5"
+    ],
+    "relationships": [
+        {
+            "direction": "true",
+            "evidence": "Position 1st from left",
+            "relationship": "adjacent_to",
+            "source": "object_01",
+            "target": "object_02"
+        },
+        {
+            "direction": "true",
+            "evidence": "Position 2nd from left",
+            "relationship": "adjacent_to",
+            "source": "object_02",
+            "target": "object_03"
+        },
+        {
+            "direction": "true",
+            "evidence": "Position 3rd from left",
+            "relationship": "adjacent_to",
+            "source": "object_03",
+            "target": "object_04"
+        },
+        {
+            "direction": "true",
+            "evidence": "Position 4th from left",
+            "relationship": "adjacent_to",
+            "source": "object_04",
+            "target": "object_05"
+        },
+        {
+            "direction": "true",
+            "evidence": "Vertical alignment",
+            "relationship": "aligns_with",
+            "source": "object_01",
+            "target": "x_axis_ticks"
+        }
+    ],
+    "schema_version": "1.0",
+    "spatial_information": [
+        {
+            "evidence": "Top-left panel",
+            "reference": "object_01",
+            "relation": "above",
+            "subject": "x_axis"
+        },
+        {
+            "evidence": "Zoomed view",
+            "reference": "object_01,02,03,04",
+            "relation": "contained_in",
+            "subject": "middle_panels"
+        }
+    ],
+    "summary": {
+        "main_concept": "Frequency of five types of school supplies.",
+        "purpose": "To visualize quantitative data for comparison.",
+        "what_is_shown": "A vertical bar graph showing the number of Pencils, Scales, Pens, Sharpeners, and Erasers. The data indicates 8 Pencils, 3 Scales, 2 Pens, 5 Sharpeners, and 4 Erasers."
+    },
+    "table_data": {
+        "headers": [],
+        "notes": [],
+        "present": false,
+        "rows": [],
+        "title": null
+    },
+    "text_content": [
+        {
+            "bounding_box": null,
+            "content": "Y-axis title",
+            "id": "text_01",
+            "readability": "clear",
+            "reading_order_index": 1,
+            "source": "direct_observation",
+            "type": "axis_label",
+            "uncertainty": "Crop text is just 'uplies' in one panel but context implies 'Number of supplies'."
+        },
+        {
+            "bounding_box": null,
+            "content": "X-axis title",
+            "id": "text_02",
+            "readability": "clear",
+            "reading_order_index": 0,
+            "source": "direct_observation",
+            "type": "axis_label",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "Pencil",
+            "id": "text_03",
+            "readability": "clear",
+            "reading_order_index": 3,
+            "source": "direct_observation",
+            "type": "label",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "Scale",
+            "id": "text_04",
+            "readability": "clear",
+            "reading_order_index": 4,
+            "source": "direct_observation",
+            "type": "label",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "Pen",
+            "id": "text_05",
+            "readability": "clear",
+            "reading_order_index": 5,
+            "source": "direct_observation",
+            "type": "label",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "Sharpener",
+            "id": "text_06",
+            "readability": "clear",
+            "reading_order_index": 6,
+            "source": "direct_observation",
+            "type": "label",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "Eraser",
+            "id": "text_07",
+            "readability": "clear",
+            "reading_order_index": 7,
+            "source": "direct_observation",
+            "type": "label",
+            "uncertainty": null
+        }
+    ],
+    "uncertainties": [
+        {
+            "affected_information": "Assuming the numbers visible on the y-axis are integers from 0 to 10.",
+            "issue": "Image resolution and cropping make some panel text redundant.",
+            "reason": "High visual clarity",
+            "target": "axis_scale"
+        }
+    ],
+    "visual_information": {
+        "highlighting": [
+            "Red dotted lines used to indicate the exact values of each bar."
+        ],
+        "meaningful_colors": [
+            "Green: Pencil",
+            "Blue: Scale",
+            "Yellow: Pen",
+            "Pink: Sharpener",
+            "Purple: Eraser"
+        ],
+        "orientation": [
+            "Vertical bars",
+            "Horizontal axis titles"
+        ],
+        "other_meaningful_visual_features": [
+            "Grid lines",
+            "Arrows on axes"
+        ],
+        "shapes": [
+            "rectangular bars"
+        ]
+    }
 }

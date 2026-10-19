@@ -2,37 +2,171 @@ import os
 import json
 import time
 import datetime
-import requests
+from groq import Groq
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CHATS_DIR = os.path.join(BASE_DIR, "chats")
 LAYOUT_CACHE_DIR = os.path.join(BASE_DIR, "layout_cache")
 
-# Read Colab URL from env — same source of truth as main.py
-COLAB_API_URL = os.getenv(
-    "COLAB_API_URL",
-    "https://both-seventeen-laboring.ngrok-free.dev"
-).rstrip("/")
+GROQ_MODEL = "openai/gpt-oss-20b"
+_groq_client = Groq(api_key=os.environ["GROQ_API_KEY"])
+
+SYSTEM_PROMPT = """You are the Reasoning & Explanation Engine of OMNI STEM, an accessibility
+tutor for visually impaired STEM students.
+
+You do NOT have access to the original image. Your only source of truth
+about what the image contains is the structured JSON provided to you below,
+which was produced by a separate vision-extraction system. The student
+cannot see the image either — they rely entirely on what you say.
+
+============================================================
+1. GROUNDING RULE
+============================================================
+
+Treat the provided JSON as the complete and only record of what is visible
+in the image. Do not claim to "see" anything. Do not add details, values,
+labels, or connections that are not present in the JSON, even if they would
+be typical for that type of diagram.
+
+If a JSON field is null, "unclear", "unreadable", or listed in
+"uncertainties", say so plainly to the student rather than guessing or
+smoothing over it (e.g. "the diagram doesn't clearly show R2's value" is
+better than inventing a plausible-sounding one). A student who cannot see
+the image has no way to catch a wrong guess — never let confidence in your
+phrasing exceed the confidence the JSON actually supports.
+
+============================================================
+2. YOUR JOB VS THE VISION ENGINE'S JOB
+============================================================
+
+The vision engine deliberately did NOT solve problems, perform
+calculations, or draw conclusions beyond what's directly extractable.
+That responsibility is yours. You should:
+
+- Explain what the image shows, in plain spoken language
+- Answer the student's specific question using the JSON as evidence
+- Perform relevant calculations, reasoning, or worked examples when useful
+  for teaching (e.g. compute current from V and R if both are given)
+- Draw on general STEM knowledge to explain *concepts* the diagram
+  illustrates
+
+When you go beyond what's directly stated in the JSON — explaining a
+concept, performing a calculation, or offering an interpretation — make
+that distinction natural and clear in your phrasing (e.g. "the diagram
+shows R1 at 390 ohms; using Ohm's law, that means..."), so the student can
+tell what's from the image versus what you're teaching on top of it.
+
+============================================================
+3. ACCESSIBILITY & SPOKEN-LANGUAGE STYLE
+============================================================
+
+Your response will be converted to speech (text-to-speech). Write for the
+ear, not the eye:
+
+- No markdown, bullet points, headers, or symbols that don't speak naturally
+- Never say "as shown", "as you can see", "in the image above" — the
+  student cannot see it
+- Narrate spatial layout explicitly and naturally when it matters
+  ("the resistor is on the left side, connected to..."), don't assume any
+  visual context
+- Don't read out internal IDs (e.g. "obj_r1") — refer to components the
+  way a teacher would ("the resistor labeled R1", "the 390-ohm resistor")
+- Prefer short, clear sentences over long nested ones
+- Keep responses focused and conversational — give a complete answer to
+  what was asked, not an exhaustive dump of every JSON field, and offer to
+  go deeper if there's more to explain
+
+============================================================
+4. USING CONVERSATION CONTEXT
+============================================================
+
+You may receive:
+- Structured document/diagram context for the current session
+- Recent conversation turns in this session
+
+Use recent turns for immediate follow-ups ("what about R2?" refers to the
+component just discussed). If prior conversation conflicts with the
+current document context, the current document context always wins — it's
+the ground truth for what's being discussed right now.
+
+If a follow-up question can't be answered from the provided context, the
+conversation history, or general STEM knowledge, say so honestly rather
+than guessing.
+
+============================================================
+4A. FIRST EXPLANATION VS. FOLLOW-UP QUESTIONS
+============================================================
+
+Determine which situation you're in from the recent conversation history:
+
+FIRST EXPLANATION (no prior turns, or the student is asking about this
+image/document for the first time):
+- Give a complete orientation before diving into specifics: what kind of
+  diagram/content it is, and a brief overview of its main parts, before
+  answering the specific question if one was asked.
+- If the student just uploaded something with no specific question yet
+  (or asked something generic like "what is this?"), walk through its
+  structure in a logical order, covering the overall purpose before
+  individual component details.
+- It's fine for this response to be longer — the student needs enough
+  grounding to ask good follow-up questions afterward.
+
+FOLLOW-UP (prior turns exist about this same image/document):
+- Assume the student already has the orientation from the first
+  explanation. Do NOT re-explain everything or re-list every component
+  again.
+- Answer only what was asked, using the conversation history to resolve
+  references ("it", "that one", "what about R2") to the correct
+  component or concept.
+- Keep it tight and specific — a follow-up answer should usually be much
+  shorter than a first explanation, unless the question itself demands
+  depth (e.g. "walk me through the full calculation").
+
+If you're not sure whether something counts as a genuine follow-up (e.g.
+the student changed topic or asked about a different part of the image
+than before), lean toward a slightly fuller answer rather than assuming
+too much shared context.
+
+============================================================
+5. LANGUAGE
+============================================================
+
+Respond in the same language the student used in their question
+(English, Hindi, or Marathi). Keep component labels, numeric values, and
+units in their standard form (e.g. "390 ohms", "R1", "9V") even inside a
+Hindi or Marathi sentence, since that's how a teacher would naturally
+speak them. Match a natural, conversational tone appropriate for a spoken
+tutoring session in that language — not a literal word-for-word
+translation of an English textbook style.
+
+Respond only with your spoken answer to the student — no labels, no JSON,
+no meta-commentary about your process."""
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Diagram Type Classification
 # ─────────────────────────────────────────────────────────────────────────────
-CHART_TYPES     = {"bar_chart", "line_chart", "line_graph", "pie_chart",
-                   "histogram", "scatter_plot", "scatter_chart", "graph"}
-SCHEMATIC_TYPES = {"circuit_diagram", "circuit", "flowchart", "schematic",
-                   "network_diagram", "block_diagram", "state_diagram"}
-TABLE_TYPES     = {"table", "data_table"}
-BIO_TYPES       = {"biological_diagram", "anatomy", "cell_diagram", "ecosystem"}
-GEO_TYPES       = {"geometric_figure", "geometry", "shape_diagram"}
+CHART_TYPES     = {"graph", "chart"}
+SCHEMATIC_TYPES = {"circuit_diagram", "engineering_diagram", "technical_drawing",
+                   "flowchart", "process_diagram", "architecture_diagram"}
+TABLE_TYPES     = {"table"}
+BIO_TYPES       = {"biology_diagram"}
+GEO_TYPES       = {"mathematical_diagram", "equation"}
 
 
-def _classify(d_type: str) -> str:
-    d = d_type.lower().strip()
-    if d in CHART_TYPES:     return "chart"
-    if d in SCHEMATIC_TYPES: return "schematic"
-    if d in TABLE_TYPES:     return "table"
-    if d in BIO_TYPES:       return "biological"
-    if d in GEO_TYPES:       return "geometric"
+def _classify(meta: dict) -> str:
+    if isinstance(meta.get("graph_data"), dict) and meta["graph_data"].get("present"):
+        return "chart"
+    if isinstance(meta.get("table_data"), dict) and meta["table_data"].get("present"):
+        return "table"
+    image_types = set(
+        t.lower() for t in meta.get("image_metadata", {}).get("image_type", [])
+    )
+    if image_types & SCHEMATIC_TYPES:
+        return "schematic"
+    if image_types & BIO_TYPES:
+        return "biological"
+    if image_types & GEO_TYPES:
+        return "geometric"
     return "general"
 
 
@@ -71,34 +205,34 @@ def _append_messages(session_id: str, user_query: str, ai_response: str) -> None
 # Context Block Builder — diagram-type aware
 # ─────────────────────────────────────────────────────────────────────────────
 def _format_chart_diagram(meta: dict, idx: int, loc: str) -> list:
+    gd = meta.get("graph_data", {}) or {}
     lines = []
-    lines.append(f"\n  Diagram {idx} ({loc}) — Type: {meta.get('diagram_type', 'Chart')}")
-    lines.append(f"    Title   : {meta.get('title', 'Untitled')}")
-    lines.append(f"    X-Axis  : {meta.get('x_axis_label', 'Not specified')}")
-    lines.append(f"    Y-Axis  : {meta.get('y_axis_label', 'Not specified')}")
+    lines.append(f"\n  Diagram {idx} ({loc}) — Type: {gd.get('graph_type') or 'Chart'}")
+    lines.append(f"    Title   : {gd.get('title') or 'Untitled'}")
+    lines.append(f"    X-Axis  : {gd.get('x_axis') or 'Not specified'}")
+    lines.append(f"    Y-Axis  : {gd.get('y_axis') or 'Not specified'}")
 
-    data_points = meta.get("data_points", [])
-    if data_points:
-        lines.append("    Data Points:")
-        for dp in data_points:
-            if isinstance(dp, dict):
-                lines.append(f"      • {dp.get('label','?')}: {dp.get('value','?')}")
-            else:
-                lines.append(f"      • {dp}")
-    else:
-        lines.append("    Data Points: None extracted.")
+    series = gd.get("series", [])
+    if series:
+        lines.append("    Series/Categories:")
+        for s in series:
+            lines.append(f"      • {s}")
 
-    if meta.get("key_insight"):
-        lines.append(f"    Key Insight : {meta['key_insight']}")
+    observations = gd.get("observations", [])
+    if observations:
+        lines.append("    Observations:")
+        for o in observations:
+            lines.append(f"      • {o}")
     return lines
 
 
 def _format_table_diagram(meta: dict, idx: int, loc: str) -> list:
+    td = meta.get("table_data", {}) or {}
     lines = []
-    lines.append(f"\n  Diagram {idx} ({loc}) — Type: {meta.get('diagram_type', 'Table')}")
-    lines.append(f"    Title  : {meta.get('title', 'Untitled')}")
-    headers = meta.get("headers", [])
-    rows    = meta.get("rows", [])
+    lines.append(f"\n  Diagram {idx} ({loc}) — Type: Table")
+    lines.append(f"    Title  : {td.get('title') or 'Untitled'}")
+    headers = td.get("headers", [])
+    rows    = td.get("rows", [])
     if headers:
         lines.append(f"    Columns: {', '.join(str(h) for h in headers)}")
     if rows:
@@ -107,32 +241,38 @@ def _format_table_diagram(meta: dict, idx: int, loc: str) -> list:
             lines.append(f"      • {' | '.join(str(v) for v in row)}")
         if len(rows) > 10:
             lines.append(f"      ... and {len(rows)-10} more rows.")
-    if meta.get("key_insight"):
-        lines.append(f"    Key Insight: {meta['key_insight']}")
+    notes = td.get("notes", [])
+    for n in notes:
+        lines.append(f"    Note: {n}")
     return lines
 
 
 def _format_structural_diagram(meta: dict, idx: int, loc: str) -> list:
-    lines = []
-    comp_strs, rel_strs = [], []
-    for c in meta.get("components", []):
-        if isinstance(c, dict):
-            comp_strs.append(
-                f"{c.get('label', c.get('id','?'))} [{c.get('type','?')}] at {c.get('position','?')}"
-            )
-        else:
-            comp_strs.append(str(c))
-    for r in meta.get("relationships", []):
-        if isinstance(r, dict):
-            rel_strs.append(
-                f"{r.get('from','?')} → {r.get('to','?')} ({r.get('relationship','?')})"
-            )
-        else:
-            rel_strs.append(str(r))
+    objs     = meta.get("objects", [])
+    rels     = meta.get("relationships", [])
+    spatial  = meta.get("spatial_information", [])
+    im       = meta.get("image_metadata", {}) or {}
 
-    lines.append(f"\n  Diagram {idx} ({loc}) — Type: {meta.get('diagram_type','Diagram')}")
+    comp_strs = [
+        f"{o.get('label') or o.get('id','?')} [{o.get('type','?')}]"
+        + (f": {o.get('description')}" if o.get('description') else "")
+        for o in objs
+    ]
+    rel_strs = [
+        f"{r.get('source','?')} → {r.get('target','?')} ({r.get('relationship','?')})"
+        for r in rels
+    ]
+    spatial_strs = [
+        f"{s.get('subject','?')} is {s.get('relation','?')} {s.get('reference','?')}"
+        for s in spatial
+    ]
+
+    lines = []
+    diagram_type = ", ".join(im.get("image_type", [])) or "Diagram"
+    lines.append(f"\n  Diagram {idx} ({loc}) — Type: {diagram_type}")
     lines.append(f"    Components   : {', '.join(comp_strs) if comp_strs else 'None'}")
-    lines.append(f"    Relationships: {'; '.join(rel_strs) if rel_strs else 'None'}")
+    lines.append(f"    Connections  : {'; '.join(rel_strs) if rel_strs else 'None'}")
+    lines.append(f"    Spatial Layout: {'; '.join(spatial_strs) if spatial_strs else 'None'}")
     return lines
 
 
@@ -204,13 +344,24 @@ def _build_context_block(session_data: dict) -> str:
                 if meta.get("error"):
                     lines.append(f"  Diagram {idx} ({loc}): [Processing failed: {meta['error']}]")
                     continue
-                category = _classify(meta.get("diagram_type", ""))
+
+                summary = meta.get("summary", {}) or {}
+                if summary.get("what_is_shown"):
+                    lines.append(f"  Diagram {idx} ({loc}) — Overview: {summary['what_is_shown']}")
+
+                category = _classify(meta)
                 if category == "chart":
                     lines.extend(_format_chart_diagram(meta, idx, loc))
                 elif category == "table":
                     lines.extend(_format_table_diagram(meta, idx, loc))
                 else:
                     lines.extend(_format_structural_diagram(meta, idx, loc))
+
+                uncertainties = meta.get("uncertainties", [])
+                if uncertainties:
+                    lines.append("    ⚠ Uncertain/unclear elements:")
+                    for u in uncertainties:
+                        lines.append(f"      • {u.get('target','?')}: {u.get('issue','?')} ({u.get('reason','')})")
         else:
             lines.append("[Extracted Diagrams] None found.")
 
@@ -233,110 +384,42 @@ def _detect_categories(session_data: dict) -> set:
                 try:
                     with open(cache_path, "r", encoding="utf-8") as f:
                         meta = json.load(f)
-                    d_type = meta.get("diagram_type", "")
-                    if d_type:
-                        categories.add(_classify(d_type))
+                    categories.add(_classify(meta))
                 except json.JSONDecodeError:
                     pass
     return categories
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Master Prompt Builder — category-specific
+# Master Prompt Builder
 # ─────────────────────────────────────────────────────────────────────────────
-_INSTRUCTIONS = {
-    "chart": """The student is asking about a DATA CHART OR GRAPH.
-RULES — follow every one strictly:
-1. State the chart title and what both axes represent (including units if given).
-2. List EVERY category and its EXACT numeric value. E.g.: "Pencil: 12, Scale: 9, Pen: 7".
-3. Identify the MAXIMUM value and which category it belongs to.
-4. Identify the MINIMUM value and which category it belongs to.
-5. State one meaningful comparison or trend.
-6. NEVER mention physical wiring, circuit connections, or component flow.
-7. Speak conversationally, as if reading the chart aloud to someone who cannot see it.""",
-
-    "schematic": """The student is asking about a CIRCUIT DIAGRAM, FLOWCHART, or SCHEMATIC.
-RULES:
-1. Describe the spatial layout of components (top, bottom, left, right, center).
-2. Trace key connections or flow paths step-by-step.
-3. Explain what each component does in plain language.
-4. NEVER reference chart axes, bar values, or data points.""",
-
-    "table": """The student is asking about a DATA TABLE.
-RULES:
-1. Describe what the table is about and list its column headers.
-2. Read out the most relevant rows and their values.
-3. Highlight highest and lowest values if applicable.
-4. Speak row by row, as if describing it to someone who cannot see it.""",
-
-    "biological": """The student is asking about a BIOLOGICAL DIAGRAM.
-RULES:
-1. Name and describe each labelled structure and its location.
-2. Explain the function of each part in plain language.
-3. Describe spatial relationships (e.g., "The nucleus is at the centre of the cell").
-4. NEVER reference circuit connections or chart data.""",
-
-    "geometric": """The student is asking about a GEOMETRIC FIGURE.
-RULES:
-1. Name the shape(s) and describe their properties.
-2. Describe any labelled measurements or relationships.
-3. Use precise spatial language.
-4. NEVER reference circuit components or chart values.""",
-
-    "general": """The student is asking about a diagram or document.
-RULES:
-1. Answer based ONLY on the document context provided.
-2. Speak naturally, like a human tutor.
-3. If the context is insufficient, say so honestly.""",
-}
-
-
-def _build_master_prompt(user_query: str, context_block: str, categories: set, session_history: list) -> list:
-    for priority in ("chart", "schematic", "table", "biological", "geometric", "general"):
-        if priority in categories:
-            instructions = _INSTRUCTIONS[priority]
-            break
-    else:
-        instructions = _INSTRUCTIONS["general"]
-
-    system_prompt = f"""You are an expert STEM Tutor for visually impaired students.
-
-{instructions}
-
-Do NOT mention "JSON", "context block", "session memory", or any internal system terms."""
-
+def _build_master_prompt(user_query: str, context_block: str, session_history: list) -> list:
     messages = [
-        {"role": "system", "content": system_prompt}
+        {"role": "system", "content": SYSTEM_PROMPT}
     ]
-    
+
     if context_block.strip():
         messages.append({"role": "system", "content": f"DOCUMENT CONTEXT:\n{context_block}"})
-        
+
     sliced_history = session_history[-12:] if len(session_history) > 12 else session_history
     messages.extend(sliced_history)
     messages.append({"role": "user", "content": user_query})
-    
+
     return messages
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Colab HTTP Call
+# Groq Text Call
 # ─────────────────────────────────────────────────────────────────────────────
-def _call_colab_text(messages: list) -> str:
-    endpoint = f"{COLAB_API_URL}/chat"
-    print(f"  → Calling Colab: {endpoint}")
-    
-    # The upgraded Colab notebook expects the messages array under the 'prompt' key
-    payload = {
-        "prompt": messages
-    }
-    
-    resp = requests.post(endpoint, json=payload, timeout=120)
-    resp.raise_for_status()
-    data = resp.json()
-    ai_text = data.get("response") or data.get("text") or ""
+def _call_groq_text(messages: list) -> str:
+    print(f"  → Calling Groq: {GROQ_MODEL}")
+    completion = _groq_client.chat.completions.create(
+        model=GROQ_MODEL,
+        messages=messages,
+    )
+    ai_text = completion.choices[0].message.content
     if not ai_text:
-        raise ValueError(f"Colab returned empty response: {data}")
+        raise ValueError("Groq returned an empty response.")
     return ai_text.strip()
 
 
@@ -358,28 +441,18 @@ def generate_accessible_response(session_id: str, user_query: str) -> dict:
 
     context_block = _build_context_block(session_data)
     categories    = _detect_categories(session_data)
-    messages_payload = _build_master_prompt(user_query, context_block, categories, session_history)
+    messages_payload = _build_master_prompt(user_query, context_block, session_history)
 
     print(f"  → Context found: {context_found} | Categories: {categories or {'none'}}")
-    print(f"  → Payload: {len(messages_payload)} messages → Colab...")
+    print(f"  → Payload: {len(messages_payload)} messages → Groq...")
 
     try:
-        ai_response = _call_colab_text(messages_payload)
-        print("  → Colab OK.")
-    except requests.exceptions.Timeout:
-        ai_response = (
-            "I'm sorry — the remote AI server took too long to respond. "
-            "Please try again, or check that the Colab notebook is still running."
-        )
-    except requests.exceptions.ConnectionError:
-        ai_response = (
-            "I'm sorry — I can't reach the remote AI server. "
-            "Please make sure the Colab notebook is running and the ngrok tunnel is active."
-        )
+        ai_response = _call_groq_text(messages_payload)
+        print("  → Groq OK.")
     except Exception as e:
         ai_response = (
-            f"I'm sorry — an unexpected error occurred: {e}. "
-            "Please verify the Colab notebook is running."
+            f"I'm sorry — an unexpected error occurred while generating a "
+            f"response: {e}. Please try again."
         )
 
     # Persist conversation turn to session file

@@ -1,0 +1,57 @@
+{
+    "title": "Omni-STEM_Evaluation_Document.pdf",
+    "documents": {
+        "Omni-STEM_Evaluation_Document.pdf": {
+            "text_content": "Omni-STEM Evaluation Document\nTesting Polymorphic JSON Extraction & Hybrid Routing\nTesting Objective: This document tests the Intelligent Ingestion Engine and the polymorphic\nVision JSON schema. It contains pure digital text alongside three distinct visual domains\n(Mathematical, Biological, and Electrical) to verify that the Vision-Language Model dynamically\nadapts its extraction strategy and does not hallucinate overlapping properties (e.g., axes on circuit\ndiagrams). \n1. Mathematical Data Visualization\nThis first section introduces a quantitative bar chart designed to test the bar_chart schema pathway.\nThe model should accurately extract the numeric values from the y-axis and map them to their\ncorresponding discrete categories on the x-axis without attempting to detect physical wires or spatial\nnodes.\n\n2. Biological Systems Diagram\nThe biological diagram below tests the system's ability to extract structural nodes and anatomical\nlabels using the biology schema. The visual portrays a simplified eukaryotic animal cell featuring an\nexternal cell membrane, a central nucleus, and mitochondria. The system should correctly identify\nthese spatial nodes and their relative locations.\n3. Electrical Circuit Schematic\nThis final section evaluates the circuit_diagram extraction logic. The diagram represents a closed-\nloop electronic system. A 9V Direct Current (DC) source provides potential difference, pushing\ncurrent through a 100Ω current-limiting resistor (R1) and a Light Emitting Diode (LED1). The VLM\nmust accurately construct a graph of these components and their wire connections.\n\n\n",
+            "visual_hashes": [
+                {
+                    "hash": "5563788aca78cc79610899564fd2e975",
+                    "page_or_index": "Page 0"
+                },
+                {
+                    "hash": "182518b8bb1f5da85fadad9b64abc604",
+                    "page_or_index": "Page 0"
+                },
+                {
+                    "hash": "4f8f8cc964f646ac917545108128a095",
+                    "page_or_index": "Page 0"
+                },
+                {
+                    "hash": "5563788aca78cc79610899564fd2e975",
+                    "page_or_index": "Page 1"
+                },
+                {
+                    "hash": "182518b8bb1f5da85fadad9b64abc604",
+                    "page_or_index": "Page 1"
+                },
+                {
+                    "hash": "4f8f8cc964f646ac917545108128a095",
+                    "page_or_index": "Page 1"
+                },
+                {
+                    "hash": "5563788aca78cc79610899564fd2e975",
+                    "page_or_index": "Page 2"
+                },
+                {
+                    "hash": "182518b8bb1f5da85fadad9b64abc604",
+                    "page_or_index": "Page 2"
+                },
+                {
+                    "hash": "4f8f8cc964f646ac917545108128a095",
+                    "page_or_index": "Page 2"
+                }
+            ]
+        }
+    },
+    "messages": [
+        {
+            "role": "user",
+            "content": "Explain"
+        },
+        {
+            "role": "assistant",
+            "content": "The document you have is a test sheet that includes three different kinds of visual material to check how the system extracts information from images. The first part is a simple bar chart, the second is a biology diagram of a cell, and the third is an electrical circuit schematic.\n\nLet’s start with the bar chart that the extraction engine was able to describe. The chart is labeled “Average STEM Cohort Scores.” The vertical axis, or y‑axis, runs from 0 to 100 and is marked in increments of 20. The labels that are visible on the left side of the chart say 0, 20, 40, 60, 80, and 100, so we can see that the scores are expressed as percentages.\n\nThe chart is a bar graph, meaning that each category on the horizontal axis—though the specific categories are not listed in the extracted text—has a single bar that reaches up to some height on the y‑axis. Because the vertical labels go up to 100, any bar that touches the top of the chart would represent a 100 % score, while a bar that ends at the 60 mark would represent a 60 % score, and so on.\n\nBecause the JSON doesn’t give the actual bar heights or the names of the categories, we can’t say which group scored how much. We just know that the diagram is meant to teach chart reading: you look at a bar, see how high it goes on the vertical scale, and then interpret that as a percentage of the maximum possible score.\n\nIn addition to the bar chart, the document contains two other test diagrams. One shows a simple model of a eukaryotic animal cell with a membrane, nucleus, and mitochondria, meant to check that the vision system can identify and place those biological structures in the correct order. The third diagram is a closed‑loop circuit with a 9 V DC source, a 100‑ohm resistor (labeled R1), and a light‑emitting diode (LED1). That one is meant to verify that the system can recognize electronic components, their labels, and the way they are wired together.\n\nSo, in short, the document is a mixed‑media test. The bar chart you have in the JSON shows percentage scores along a vertical scale; the biological diagram tests cell‑structure detection; and the circuit diagram tests identification of electronic parts and their connections. If you’d like more detail on any particular part—say how to calculate current from the 9 V source and the 100‑ohm resistor—I can walk through that as well."
+        }
+    ],
+    "created_at": "2026-09-22T09:11:18.339872"
+}

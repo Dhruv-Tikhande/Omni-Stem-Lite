@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import datetime
 import fitz  # PyMuPDF
 import io
@@ -156,7 +157,7 @@ def ingest_document(file_path: str, colab_url: str, session_id: str = "default")
         "cache_hits": 0
     }
 
-    for img_info in images:
+    for idx, img_info in enumerate(images):
         img_path = img_info["path"]
         md5_hash = img_info["hash"]
         page_or_index = img_info["page_or_index"]
@@ -180,14 +181,24 @@ def ingest_document(file_path: str, colab_url: str, session_id: str = "default")
                 "Extract layout, type, and all data in detail.",
                 colab_url
             )
-            # Write structured JSON to cache
-            with open(cache_path, "w", encoding="utf-8") as f:
-                json.dump(ai_response_dict, f, indent=4, ensure_ascii=False)
-                
+            # Only cache a genuinely successful extraction — never cache an error dict
+            if isinstance(ai_response_dict, dict) and ai_response_dict.get("error"):
+                print(f"⚠️ Not caching failed result for {img_path}: {ai_response_dict.get('error')[:120]}")
+                telemetry.setdefault("failed", 0)
+                telemetry["failed"] += 1
+            else:
+                with open(cache_path, "w", encoding="utf-8") as f:
+                    json.dump(ai_response_dict, f, indent=4, ensure_ascii=False)
+
         except Exception as e:
             print(f"⚠️ Failed to process {img_path}: {e}")
-            with open(cache_path, "w", encoding="utf-8") as f:
-                json.dump({"error": str(e)}, f, indent=4, ensure_ascii=False)
+            telemetry.setdefault("failed", 0)
+            telemetry["failed"] += 1
+
+        # Respect Groq per-minute token limits — wait before next image
+        if idx < len(images) - 1:
+            print("  ⏳ Waiting 60s before next image to respect Groq rate limits...")
+            time.sleep(60)
 
     save_to_session(session_id, os.path.basename(file_path), text_content, visual_hashes)
 

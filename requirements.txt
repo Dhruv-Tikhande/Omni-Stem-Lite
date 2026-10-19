@@ -4,6 +4,7 @@ uvicorn
 python-multipart
 pydantic
 requests
+python-dotenv>=1.0.0
 
 # Frontend UI & Processing
 streamlit
@@ -19,3 +20,6 @@ numpy
 sentence-transformers
 torch
 torchvision
+
+# GroqCloud Vision API
+groq>=0.9.0

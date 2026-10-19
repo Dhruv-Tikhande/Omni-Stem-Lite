@@ -1,0 +1,434 @@
+{
+    "educational_interpretation": {
+        "concepts": [
+            "Light-dependent resistor (LDR) circuit",
+            "Voltage divider",
+            "NPN transistor switch",
+            "LED driver circuit"
+        ],
+        "interpretations": [
+            "The circuit is designed to turn on an LED when the light level changes, likely in response to darkness or brightness depending on the specific component values and transistor configuration.",
+            "The LDR and R2 form a voltage divider that controls the base current of the transistor Q1.",
+            "The transistor Q1 acts as a switch to control the current flowing through the LED and R1."
+        ],
+        "present": true
+    },
+    "graph_data": {
+        "graph_type": null,
+        "observations": [],
+        "present": false,
+        "series": [],
+        "title": null,
+        "x_axis": null,
+        "y_axis": null
+    },
+    "image_metadata": {
+        "caption": null,
+        "educational_context": "Electronics, basic circuit design, sensor circuits",
+        "image_completeness": {
+            "missing_information": null,
+            "status": "complete"
+        },
+        "image_quality": {
+            "blur": false,
+            "cropping": false,
+            "occlusion": false,
+            "overall": "clear",
+            "text_readability": "good"
+        },
+        "image_type": [
+            "circuit_diagram",
+            "engineering_diagram"
+        ],
+        "stem_domain": [
+            "Engineering",
+            "Physics"
+        ],
+        "subdomain": [
+            "Electrical Engineering",
+            "Circuit Design"
+        ],
+        "title": null,
+        "topic": "LDR-based LED switch circuit"
+    },
+    "mathematical_content": {
+        "equations": [],
+        "notes": [],
+        "present": false,
+        "symbols": [],
+        "units": [
+            "V",
+            "k"
+        ],
+        "variables": []
+    },
+    "objects": [
+        {
+            "bounding_box": null,
+            "description": "A 9V battery symbol with positive and negative terminals.",
+            "id": "obj_battery",
+            "label": "9V",
+            "properties": [],
+            "source": "direct_observation",
+            "type": "battery",
+            "uncertainty": null,
+            "units": [],
+            "values": [
+                "9V"
+            ]
+        },
+        {
+            "bounding_box": null,
+            "description": "A light-dependent resistor symbol, shown as a circle with a zigzag line inside.",
+            "id": "obj_ldr",
+            "label": "LDR",
+            "properties": [],
+            "source": "direct_observation",
+            "type": "resistor",
+            "uncertainty": null,
+            "units": [],
+            "values": []
+        },
+        {
+            "bounding_box": null,
+            "description": "A fixed resistor symbol, shown as a zigzag line.",
+            "id": "obj_r1",
+            "label": "R1",
+            "properties": [],
+            "source": "direct_observation",
+            "type": "resistor",
+            "uncertainty": null,
+            "units": [],
+            "values": [
+                "390"
+            ]
+        },
+        {
+            "bounding_box": null,
+            "description": "A variable resistor (potentiometer) symbol, shown as a zigzag line with an arrow pointing to it.",
+            "id": "obj_r2",
+            "label": "R2",
+            "properties": [],
+            "source": "direct_observation",
+            "type": "resistor",
+            "uncertainty": null,
+            "units": [],
+            "values": [
+                "100k"
+            ]
+        },
+        {
+            "bounding_box": null,
+            "description": "A light-emitting diode symbol, shown as a diode with two arrows pointing away from it.",
+            "id": "obj_led",
+            "label": "LED",
+            "properties": [],
+            "source": "direct_observation",
+            "type": "diode",
+            "uncertainty": null,
+            "units": [],
+            "values": [
+                "2V"
+            ]
+        },
+        {
+            "bounding_box": null,
+            "description": "An NPN transistor symbol, shown as a circle with three leads (base, collector, emitter). The arrow on the emitter points outwards.",
+            "id": "obj_q1",
+            "label": "Q1",
+            "properties": [],
+            "source": "direct_observation",
+            "type": "transistor",
+            "uncertainty": null,
+            "units": [],
+            "values": [
+                "BC547"
+            ]
+        },
+        {
+            "bounding_box": null,
+            "description": "A junction point where the top of the LDR, the top of R1, and the positive terminal of the battery connect.",
+            "id": "node_top_rail",
+            "label": null,
+            "properties": [],
+            "source": "direct_observation",
+            "type": "junction_node",
+            "uncertainty": null,
+            "units": [],
+            "values": []
+        },
+        {
+            "bounding_box": null,
+            "description": "A junction point where the bottom of the LDR, the top of R2, and the base of Q1 connect.",
+            "id": "node_base",
+            "label": null,
+            "properties": [],
+            "source": "direct_observation",
+            "type": "junction_node",
+            "uncertainty": null,
+            "units": [],
+            "values": []
+        },
+        {
+            "bounding_box": null,
+            "description": "A junction point where the bottom of R2, the emitter of Q1, and the negative terminal of the battery connect.",
+            "id": "node_bottom_rail",
+            "label": null,
+            "properties": [],
+            "source": "direct_observation",
+            "type": "junction_node",
+            "uncertainty": null,
+            "units": [],
+            "values": []
+        }
+    ],
+    "process_information": {
+        "present": false,
+        "sequence": [],
+        "steps": []
+    },
+    "reading_order": [
+        "obj_battery",
+        "obj_ldr",
+        "obj_r1",
+        "obj_led",
+        "obj_q1",
+        "obj_r2"
+    ],
+    "relationships": [
+        {
+            "direction": "bidirectional",
+            "evidence": "Wiring in the diagram",
+            "relationship": "connected_to",
+            "source": "obj_battery",
+            "target": "node_top_rail"
+        },
+        {
+            "direction": "bidirectional",
+            "evidence": "Wiring in the diagram",
+            "relationship": "connected_to",
+            "source": "obj_ldr",
+            "target": "node_top_rail"
+        },
+        {
+            "direction": "bidirectional",
+            "evidence": "Wiring in the diagram",
+            "relationship": "connected_to",
+            "source": "obj_r1",
+            "target": "node_top_rail"
+        },
+        {
+            "direction": "bidirectional",
+            "evidence": "Wiring in the diagram",
+            "relationship": "connected_to",
+            "source": "obj_ldr",
+            "target": "node_base"
+        },
+        {
+            "direction": "bidirectional",
+            "evidence": "Wiring in the diagram",
+            "relationship": "connected_to",
+            "source": "obj_r2",
+            "target": "node_base"
+        },
+        {
+            "direction": "bidirectional",
+            "evidence": "Wiring in the diagram",
+            "relationship": "connected_to",
+            "source": "obj_q1",
+            "target": "node_base"
+        },
+        {
+            "direction": "bidirectional",
+            "evidence": "Wiring in the diagram",
+            "relationship": "connected_to",
+            "source": "obj_r2",
+            "target": "node_bottom_rail"
+        },
+        {
+            "direction": "bidirectional",
+            "evidence": "Wiring in the diagram",
+            "relationship": "connected_to",
+            "source": "obj_q1",
+            "target": "node_bottom_rail"
+        },
+        {
+            "direction": "bidirectional",
+            "evidence": "Wiring in the diagram",
+            "relationship": "connected_to",
+            "source": "obj_battery",
+            "target": "node_bottom_rail"
+        },
+        {
+            "direction": "bidirectional",
+            "evidence": "Wiring in the diagram",
+            "relationship": "connected_to",
+            "source": "obj_r1",
+            "target": "obj_led"
+        },
+        {
+            "direction": "bidirectional",
+            "evidence": "Wiring in the diagram",
+            "relationship": "connected_to",
+            "source": "obj_led",
+            "target": "obj_q1"
+        }
+    ],
+    "schema_version": "1.0",
+    "spatial_information": [
+        {
+            "evidence": "Visual layout of the circuit diagram",
+            "reference": "obj_ldr",
+            "relation": "left_of",
+            "subject": "obj_r1"
+        },
+        {
+            "evidence": "Visual layout of the circuit diagram",
+            "reference": "obj_r2",
+            "relation": "below",
+            "subject": "obj_ldr"
+        },
+        {
+            "evidence": "Visual layout of the circuit diagram",
+            "reference": "obj_q1",
+            "relation": "right_of",
+            "subject": "obj_r2"
+        },
+        {
+            "evidence": "Visual layout of the circuit diagram",
+            "reference": "obj_led",
+            "relation": "above",
+            "subject": "obj_q1"
+        }
+    ],
+    "summary": {
+        "main_concept": "An electronic circuit using a Light-Dependent Resistor (LDR) to control an LED via a transistor switch.",
+        "purpose": "To demonstrate or implement a light-sensitive switch that turns on an LED.",
+        "what_is_shown": "A schematic diagram of an electronic circuit. The circuit includes a 9V battery, a Light-Dependent Resistor (LDR), a 390-ohm resistor (R1), a 100k-ohm variable resistor (R2), a Light-Emitting Diode (LED), and a BC547 NPN transistor (Q1). The LDR and R2 form a voltage divider that controls the base of the transistor. The transistor controls the current through the LED and R1."
+    },
+    "table_data": {
+        "headers": [],
+        "notes": [],
+        "present": false,
+        "rows": [],
+        "title": null
+    },
+    "text_content": [
+        {
+            "bounding_box": null,
+            "content": "9V",
+            "id": "txt_battery_label",
+            "readability": "clear",
+            "reading_order_index": 1,
+            "source": "direct_observation",
+            "type": "label",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "LDR",
+            "id": "txt_ldr_label",
+            "readability": "clear",
+            "reading_order_index": 2,
+            "source": "direct_observation",
+            "type": "label",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "R1",
+            "id": "txt_r1_label",
+            "readability": "clear",
+            "reading_order_index": 3,
+            "source": "direct_observation",
+            "type": "label",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "390",
+            "id": "txt_r1_value",
+            "readability": "clear",
+            "reading_order_index": 4,
+            "source": "direct_observation",
+            "type": "value",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "LED",
+            "id": "txt_led_label",
+            "readability": "clear",
+            "reading_order_index": 5,
+            "source": "direct_observation",
+            "type": "label",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "2V",
+            "id": "txt_led_value",
+            "readability": "clear",
+            "reading_order_index": 6,
+            "source": "direct_observation",
+            "type": "value",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "Q1",
+            "id": "txt_q1_label",
+            "readability": "clear",
+            "reading_order_index": 7,
+            "source": "direct_observation",
+            "type": "label",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "BC547",
+            "id": "txt_q1_value",
+            "readability": "clear",
+            "reading_order_index": 8,
+            "source": "direct_observation",
+            "type": "value",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "R2",
+            "id": "txt_r2_label",
+            "readability": "clear",
+            "reading_order_index": 9,
+            "source": "direct_observation",
+            "type": "label",
+            "uncertainty": null
+        },
+        {
+            "bounding_box": null,
+            "content": "100k",
+            "id": "txt_r2_value",
+            "readability": "clear",
+            "reading_order_index": 10,
+            "source": "direct_observation",
+            "type": "value",
+            "uncertainty": null
+        }
+    ],
+    "uncertainties": [],
+    "visual_information": {
+        "highlighting": [],
+        "meaningful_colors": [],
+        "orientation": [],
+        "other_meaningful_visual_features": [
+            "The circuit is drawn on a dark background with white lines and text.",
+            "The right side of the image has a textured, noisy appearance, possibly an artifact or a different background layer."
+        ],
+        "shapes": [
+            "The LDR is represented by a circle containing a zigzag line.",
+            "The resistors are represented by zigzag lines.",
+            "The LED is represented by a diode symbol with two arrows pointing away.",
+            "The transistor is represented by a circle with three leads and an arrow on the emitter."
+        ]
+    }
+}

@@ -1,10 +1,4 @@
 {
-    "diagram_type": "circuit_diagram",
-    "title": null,
-    "chart_data": null,
-    "components": [],
-    "relationships": [],
-    "key_takeaway": null,
-    "clarification_required": false,
-    "candidate_entities": []
+    "error": "Groq API returned an error (status 400): Error code: 400 - {'error': {'message': \"Generated JSON does not match the expected schema. Please adjust your prompt. See 'failed_generation' for more details. Error: jsonschema: '' does not validate with /required: missing properties: 'schema_version', 'summary', 'reading_order', 'text_content', 'objects', 'relationships', 'spatial_information', 'mathematical_content', 'table_data', 'process_information', 'visual_information', 'uncertainties'\", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': '{\"educational_interpretation\": {\"concepts\": [\"series circuit\", \"current limiting resistor\", \"LED polarity\", \"DC voltage source\"], \"interpretations\": [\"Educationally, this is a standard simple LED driver circuit used to teach electrical polarity and current limiting.\", \"The orange arrows indicate that the device is an emitter of light, consistent with the label \\'Light Emitting Diode\\'.\"], \"present\": true}, \"graph_data\": {\"graph_type\": null, \"observations\": [], \"present\": false, \"series\": [], \"title\": null, \"x_axis\": null, \"y_axis\": null}, \"image_metadata\": {\"caption\": null, \"educational_context\": \"Basic electronics instruction\", \"image_completeness\": {\"missing_information\": null, \"status\": \"complete\"}, \"image_quality\": {\"blur\": false, \"cropping\": false, \"occlusion\": false, \"overall\": \"High contrast, clear text and symbols.\", \"text_readability\": \"high\"}, \"image_type\": [\"circuit_diagram\", \"electrical_schematic\"], \"stem_domain\": [\"engineering\", \"physics\"], \"subdomain\": [\"electronics\"], \"title\": \"Basic Series LED Circuit Schematic\", \"topic\": \"Circuit Analysis\"}}'}}",
+    "parse_error": true
 }
