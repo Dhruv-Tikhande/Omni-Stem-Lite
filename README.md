@@ -1,4 +1,4 @@
-﻿# Omni-STEM Lite 🔬
+# Omni-STEM Lite 🔬
 
 > **An AI-powered STEM accessibility assistant for visually impaired students.**
 > Upload documents, diagrams, or images — ask questions in text or voice — and get spoken-language explanations grounded in your material.
@@ -62,6 +62,11 @@ The system is built around a **React + Vite** frontend and a **FastAPI** backend
 - **Transcription**: `faster-whisper` (tiny model, `int8` quantized, CPU) converts audio to text
 - **Text-to-Speech**: `gTTS` streams MP3 audio of AI responses back to the browser
 
+### ♿ Accessibility & Audio Feedback
+- **Screen Reader Announcements**: Live assertive ARIA regions (`AccessibilityContext`) announce recording status, incoming responses, and document uploads
+- **Auditory Feedback (Earcons)**: Synthesized sound cues (`audioCues.js` via Web Audio API) signal recording start/stop, processing states, and errors without relying on visual feedback
+- **Audio Playback**: Inline audio player (`AudioPlayer`) for streaming and replaying spoken explanations
+
 ### 🎨 Rich Frontend UI
 - **React 19** with **Vite 8** build tooling
 - **TailwindCSS v4** for styling
@@ -79,31 +84,61 @@ The system is built around a **React + Vite** frontend and a **FastAPI** backend
 ```
 Omni-Stem-Lite/
 ├── backend/
-│   ├── main.py                # FastAPI app — all API endpoints
-│   ├── fast_model_engine.py   # Vision extraction via GroqCloud
-│   ├── reasoning_engine.py    # Reasoning/explanation via GroqCloud
-│   ├── ingestion_engine.py    # PDF/DOCX/image parsing & session storage
-│   ├── memory_engine.py       # (Legacy) FAISS vector memory
-│   ├── voice_engine.py        # Voice helpers
-│   ├── image_processor.py     # Image preprocessing utilities
-│   ├── pdf_processor.py       # PDF helpers
-│   ├── chats/                 # Session JSON files (auto-created)
-│   ├── layout_cache/          # Visual analysis cache (auto-created)
-│   └── setup.bat              # Windows dev-setup helper
+│   ├── main.py                     # FastAPI app — API routing, endpoints, & CORS
+│   ├── fast_model_engine.py        # Vision extraction via GroqCloud (diagram JSON)
+│   ├── reasoning_engine.py         # Reasoning & explanation engine via GroqCloud LLM
+│   ├── ingestion_engine.py         # PDF/DOCX/image parsing, image extraction & cache
+│   ├── image_processor.py          # Image preprocessing, format conversion, & base64
+│   ├── pdf_processor.py            # PDF rendering & page-level text extraction
+│   ├── voice_engine.py             # Audio transcription (Whisper) & TTS helpers
+│   ├── memory_engine.py            # (Legacy) FAISS vector memory & embeddings
+│   ├── chats/                      # Session JSON storage (auto-created)
+│   ├── layout_cache/               # Diagram analysis JSON cache (auto-created)
+│   ├── processed_images/           # Extracted diagram images cache (auto-created)
+│   ├── temp_assets/                # Sample test images & diagrams
+│   └── setup.bat                   # Windows development setup helper
 ├── frontend-react/
+│   ├── public/                     # Static web assets (favicons, icons)
 │   ├── src/
+│   │   ├── assets/                 # UI graphics, logos, & illustrations
 │   │   ├── components/
-│   │   │   ├── chat/          # ChatComposer, MessageList, WelcomeScreen, etc.
-│   │   │   └── layout/        # AppShell, Sidebar
-│   │   ├── contexts/          # ChatContext, ThemeContext
-│   │   ├── hooks/             # usePushToTalk
-│   │   ├── services/          # api.js (all fetch calls)
-│   │   └── utils/
-│   ├── index.html
-│   └── vite.config.js
-├── requirements.txt
-├── .env.example               # Environment variable template
-└── temp_uploads/              # Transient upload staging (auto-created)
+│   │   │   ├── chat/               # Chat UI components
+│   │   │   │   ├── AssistantMessage.jsx   # AI message bubble with TTS audio player
+│   │   │   │   ├── ChatComposer.jsx       # Input bar, mic button, & file upload
+│   │   │   │   ├── ChatHeader.jsx         # Header bar with session title & actions
+│   │   │   │   ├── ChatWorkspace.jsx      # Main scrollable conversation view
+│   │   │   │   ├── MarkdownRenderer.jsx   # Markdown, LaTeX math, & code highlighting
+│   │   │   │   ├── MessageList.jsx        # Message history container
+│   │   │   │   ├── TypingIndicator.jsx    # Loading / thinking state indicator
+│   │   │   │   ├── UserMessage.jsx        # Student message bubble
+│   │   │   │   └── WelcomeScreen.jsx      # Empty state with feature highlights
+│   │   │   ├── layout/             # Application layout components
+│   │   │   │   ├── AppShell.jsx           # Master responsive container
+│   │   │   │   └── Sidebar.jsx            # Session history, document status, theme toggle
+│   │   │   └── voice/              # Audio playback components
+│   │   │       └── AudioPlayer.jsx        # Audio controller for TTS responses
+│   │   ├── contexts/               # React Context providers
+│   │   │   ├── AccessibilityContext.jsx   # Live ARIA region for screen reader updates
+│   │   │   ├── ChatContext.jsx            # Active session state & messaging logic
+│   │   │   └── ThemeContext.jsx           # Dark / Light / System theme provider
+│   │   ├── hooks/                  # Custom React hooks
+│   │   │   └── usePushToTalk.js           # Push-to-Talk keyboard listener (Spacebar)
+│   │   ├── services/
+│   │   │   └── api.js                     # REST API client for backend communication
+│   │   ├── utils/
+│   │   │   └── audioCues.js               # Web Audio API sound feedback (mic, status)
+│   │   ├── App.jsx                 # Top-level React component tree
+│   │   ├── index.css               # TailwindCSS v4 and global theme styling
+│   │   └── main.jsx                # Application bootstrap entry point
+│   ├── index.html                  # HTML entry point
+│   ├── package.json                # Frontend dependencies & npm scripts
+│   ├── vite.config.js              # Vite configuration & dev server proxy
+│   └── .oxlintrc.json              # Oxlint linter configuration
+├── create_test_pdf.py              # Helper to generate synthetic test PDFs with diagrams
+├── test_ingestion.py               # Ingestion pipeline validation script
+├── requirements.txt                # Python backend dependencies
+├── .env.example                    # Environment variable configuration template
+└── temp_uploads/                   # Transient document upload staging (auto-created)
 ```
 
 ---

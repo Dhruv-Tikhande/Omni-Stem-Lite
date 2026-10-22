@@ -43,6 +43,14 @@
         {
             "role": "assistant",
             "content": "If you swap the 9‑volt battery for a 16‑volt supply, a few things in that simple light‑activated circuit will change.\n\nFirst, the voltage across the LED and its series resistor, R1, will increase. The transistor will still turn on when the LDR lets enough base voltage through, so the LED will still light. But now the collector‑to‑emitter voltage when the transistor is on will be almost the full 16 V minus the small drop across the transistor (about 0.2 V). That leaves roughly 15.8 V to be shared by the LED and the 390‑ohm resistor.\n\nIf the LED’s forward voltage is about 2 V, the 390‑ohm resistor will drop the rest. 13.8 V across 390 ohms gives a current of about 35 mA. Most small LEDs are rated for 20 mA maximum, so the LED could overheat or even burn out. The transistor (BC547) can handle up to about 100 mA, so it might survive the extra current, but it will be closer to its limit and could overheat too.\n\nSecond, the base current will also increase because the base‑to‑emitter junction sees a higher voltage difference. That might push the transistor into a higher saturation level, but it could also stress the base‑emitter junction if the base resistor or R2 value isn’t adjusted.\n\nSo the main practical outcome is that the LED and possibly the transistor could get overloaded. To keep the circuit safe, you’d either need to use a higher‑value resistor in series with the LED, add a base resistor, or keep the supply at 9 V."
+        },
+        {
+            "role": "user",
+            "content": "Hello, excuse me."
+        },
+        {
+            "role": "assistant",
+            "content": "I'm sorry — an unexpected error occurred while generating a response: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}. Please try again."
         }
     ],
     "created_at": "2026-09-22T07:22:02.906790"

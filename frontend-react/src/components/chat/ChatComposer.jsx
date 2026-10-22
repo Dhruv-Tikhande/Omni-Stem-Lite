@@ -26,13 +26,16 @@ export default function ChatComposer() {
     ta.style.height = Math.min(ta.scrollHeight, 200) + 'px';
   }, [text]);
 
-  // Wire Push-to-Talk transcript to input state
+  // Wire Push-to-Talk transcript → auto-send immediately
   useEffect(() => {
     if (pttTranscript) {
-      setText(prev => prev ? `${prev} ${pttTranscript}` : pttTranscript);
+      const trimmed = pttTranscript.trim();
       resetTranscript();
+      if (trimmed && !isLoading) {
+        sendMessage(trimmed).catch(() => {});
+      }
     }
-  }, [pttTranscript, resetTranscript]);
+  }, [pttTranscript, resetTranscript, sendMessage, isLoading]);
 
   const handleSend = useCallback(async () => {
     const trimmed = text.trim();
